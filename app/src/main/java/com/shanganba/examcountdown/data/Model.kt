@@ -91,7 +91,13 @@ data class TaskTemplate(
 )
 
 @Serializable
-data class ExtraTask(val id: String, val title: String)
+data class ExtraTask(
+    val id: String,
+    val title: String,
+    val moduleId: String = "",
+    val amount: Int = 0,
+    val unit: String = "题"
+)
 
 @Serializable
 data class ProfileData(
@@ -163,6 +169,8 @@ data class Settings(
     val dailyReminderMinute: Int = 20 * 60,
     /** 每周哪几天提醒：1=周一 … 7=周日 */
     val dailyReminderDays: List<Int> = listOf(1, 2, 3, 4, 5, 6, 7),
+    /** 每天的单独提醒时间：day(1..7) → 分钟数；没配就沿用 dailyReminderMinute */
+    val dailyReminderTimes: Map<Int, Int> = emptyMap(),
     val nodeReminderOn: Boolean = true,
     val nodeReminderMinute: Int = 9 * 60,
     val autoCheckUpdate: Boolean = true,

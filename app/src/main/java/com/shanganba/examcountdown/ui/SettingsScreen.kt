@@ -64,6 +64,7 @@ fun SettingsScreen(
     var editNodeTime by remember { mutableStateOf(false) }
     var editUrl by remember { mutableStateOf(false) }
     var showCrash by remember { mutableStateOf(false) }
+    var editingDay by remember { mutableStateOf<Int?>(null) }
     var crashText by remember { mutableStateOf(CrashLogger.read(ctx)) }
     var versionStatus by remember { mutableStateOf("检查中…") }
 
@@ -216,6 +217,31 @@ fun SettingsScreen(
                                 }
                             )
                         }
+                    }
+                    // 每个选中的星期可以单独设时间
+                    if (s.dailyReminderOn && s.dailyReminderDays.isNotEmpty()) {
+                        Spacer(Modifier.height(4.dp))
+                        s.dailyReminderDays.sorted().forEach { day ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    "周" + listOf("一", "二", "三", "四", "五", "六", "日")[day - 1],
+                                    style = SgType.meta,
+                                    color = c.inkMuted,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                SgChip(
+                                    formatMinute(s.dailyReminderTimes[day] ?: s.dailyReminderMinute),
+                                    if (s.dailyReminderTimes.containsKey(day)) c.accent else c.inkMuted,
+                                    modifier = Modifier.clickable { editingDay = day }
+                                )
+                            }
+                            Spacer(Modifier.height(3.dp))
+                        }
+                        Text(
+                            "点某天的具体时间可以单独调整（灰色表示沿用统一时间）",
+                            style = SgType.meta,
+                            color = c.inkFaint
+                        )
                     }
                 }
                 SgSoftButton("改时间") { editDailyTime = true }
@@ -389,8 +415,19 @@ fun SettingsScreen(
             initial = formatMinute(s.dailyReminderMinute),
             onDismiss = { editDailyTime = false },
             onSave = { value ->
-                vm.updateSettings { it.copy(dailyReminderMinute = value) }
+                vm.updateSettings { it.copy(dailyReminderMinute = value, dailyReminderTimes = emptyMap()) }
                 editDailyTime = false
+            }
+        )
+    }
+    editingDay?.let { day ->
+        TimePickDialog(
+            title = "周" + listOf("一", "二", "三", "四", "五", "六", "日")[day - 1] + " 的提醒时间",
+            initial = formatMinute(s.dailyReminderTimes[day] ?: s.dailyReminderMinute),
+            onDismiss = { editingDay = null },
+            onSave = { value ->
+                vm.updateSettings { it.copy(dailyReminderTimes = it.dailyReminderTimes + (day to value)) }
+                editingDay = null
             }
         )
     }

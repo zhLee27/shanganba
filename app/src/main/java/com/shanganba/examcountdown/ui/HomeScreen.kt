@@ -2,6 +2,8 @@ package com.shanganba.examcountdown.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -89,8 +91,8 @@ fun HomeScreen(
                 extras.forEach { extra ->
                     TaskRow(
                         title = extra.title,
-                        note = "临时",
-                        color = c.accent2,
+                        note = if (extra.amount > 0) "${extra.amount} ${extra.unit}" else "临时",
+                        color = if (extra.moduleId.isNotBlank()) moduleColorOf(extra.moduleId) else c.accent2,
                         done = day.doneExtraIds.contains(extra.id),
                         onLongClick = { pendingDeleteExtra = extra }
                     ) { vm.toggleExtraTask(extra.id) }
@@ -148,20 +150,98 @@ fun HomeScreen(
 
     if (showAddTask) {
         var text by remember { mutableStateOf("") }
+        var moduleId by remember { mutableStateOf("") }
+        var amount by remember { mutableStateOf("") }
+        var unit by remember { mutableStateOf("题") }
+        val picked = state.modules.firstOrNull { it.id == moduleId }
         AlertDialog(
             onDismissRequest = { showAddTask = false },
-            title = { Text("自定义今天的任务", style = SgType.cardTitle) },
+            title = { Text("添加今天的任务", style = SgType.cardTitle) },
             text = {
-                SgTextField(
-                    value = text,
-                    onValueChange = { text = it.take(30) },
-                    singleLine = true,
-                    label = "任务内容"
-                )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                ) {
+                    SgTextField(
+                        value = text,
+                        onValueChange = { text = it.take(30) },
+                        label = "任务内容（留空就用题型名）"
+                    )
+                    Text("关联题型（可选，可精确到小题型）", style = SgType.meta, color = c.inkMuted)
+                    listOf("XINGCE" to "行测", "SHENLUN" to "申论").forEach { (sub, label) ->
+                        val parents = state.modules
+                            .filter { it.subject == sub && it.parentId.isEmpty() }
+                            .sortedBy { it.order }
+                        Text(label, style = SgType.chip, color = c.accent)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.horizontalScroll(rememberScrollState())
+                        ) {
+                            parents.forEach { m ->
+                                SgChip(
+                                    m.name,
+                                    if (moduleId == m.id) moduleColorOf(m.id) else c.inkMuted,
+                                    modifier = Modifier.clickable {
+                                        if (moduleId == m.id) {
+                                            moduleId = ""
+                                        } else {
+                                            moduleId = m.id
+                                            if (m.defaultQuestionCount > 0) amount = m.defaultQuestionCount.toString()
+                                            unit = if (m.subject == "SHENLUN") "篇" else "题"
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                        val kids = state.modules.filter { it.parentId == moduleId }.sortedBy { it.order }
+                        if (kids.isNotEmpty()) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier = Modifier.horizontalScroll(rememberScrollState())
+                            ) {
+                                kids.forEach { m ->
+                                    SgChip(
+                                        "· " + m.name,
+                                        if (moduleId == m.id) moduleColorOf(m.id) else c.inkMuted,
+                                        modifier = Modifier.clickable {
+                                            moduleId = m.id
+                                            if (m.defaultQuestionCount > 0) amount = m.defaultQuestionCount.toString()
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Text("数量与单位", style = SgType.meta, color = c.inkMuted)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
+                        SgTextField(
+                            value = amount,
+                            onValueChange = { amount = it.filter { ch -> ch.isDigit() }.take(4) },
+                            label = "数量",
+                            keyboardType = KeyboardType.Number,
+                            modifier = Modifier.width(104.dp)
+                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(5.dp),
+                            modifier = Modifier.horizontalScroll(rememberScrollState())
+                        ) {
+                            listOf("题", "篇", "组", "道", "分钟").forEach { u ->
+                                SgChip(
+                                    u,
+                                    if (unit == u) c.accent else c.inkMuted,
+                                    modifier = Modifier.clickable { unit = u }
+                                )
+                            }
+                        }
+                    }
+                }
             },
             confirmButton = {
                 TextButton(onClick = {
-                    if (text.isNotBlank()) vm.addExtraTask(text.trim())
+                    val title = text.trim().ifBlank { picked?.name ?: "" }
+                    if (title.isNotBlank()) {
+                        vm.addExtraTask(title, moduleId, amount.toIntOrNull() ?: 0, unit)
+                    }
                     showAddTask = false
                 }) { Text("添加") }
             },

@@ -97,11 +97,15 @@ object Reminders {
         ensureChannel(ctx)
         val s = state.settings
         if (s.dailyReminderOn) {
-            scheduleAt(
-                ctx, nextOccurrence(s.dailyReminderMinute, s.dailyReminderDays), KIND_DAILY, RC_DAILY,
-                "今天的计划还没完成",
-                "还有 ${state.templates.count { it.enabled }} 项任务在等你，花几分钟把今天的勾掉吧。"
-            )
+            val days = if (s.dailyReminderDays.isEmpty()) listOf(1, 2, 3, 4, 5, 6, 7) else s.dailyReminderDays
+            days.forEach { day ->
+                val minute = s.dailyReminderTimes[day] ?: s.dailyReminderMinute
+                scheduleAt(
+                    ctx, nextOccurrence(minute, listOf(day)), KIND_DAILY, RC_DAILY + day,
+                    "今天的计划还没完成",
+                    "还有 ${state.templates.count { it.enabled }} 项任务在等你，花几分钟把今天的勾掉吧。"
+                )
+            }
         }
         if (s.nodeReminderOn) {
             state.nodes.filter { it.type == "笔试" || it.type == "报名截止" }.forEach { node ->

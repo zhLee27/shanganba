@@ -45,10 +45,15 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         s.copy(days = s.days + (key to day.copy(doneTemplateIds = done)))
     }
 
-    fun addExtraTask(title: String) = mutate { s ->
+    fun addExtraTask(
+        title: String,
+        moduleId: String = "",
+        amount: Int = 0,
+        unit: String = "题"
+    ) = mutate { s ->
         val key = todayKey()
         val day = s.days[key] ?: DayRecord(date = key)
-        val task = ExtraTask(UUID.randomUUID().toString(), title)
+        val task = ExtraTask(UUID.randomUUID().toString(), title, moduleId, amount, unit)
         s.copy(days = s.days + (key to day.copy(extraTasks = day.extraTasks + task)))
     }
 
