@@ -175,26 +175,26 @@ private fun NodeDialog(initial: ExamNode?, onDismiss: () -> Unit, onSave: (ExamN
         title = { Text(if (initial == null) "新增考试节点" else "编辑节点", style = SgType.cardTitle) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
+                SgTextField(
                     value = title, onValueChange = { title = it },
-                    label = { Text("名称，如 安徽省考 · 笔试") }, singleLine = true
+                    label = "名称，如 安徽省考 · 笔试", singleLine = true
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf("报名开始", "报名截止", "笔试", "面试", "自定义").forEach { t ->
                         SgChip(t, if (t == type) c.accent else c.inkMuted, modifier = Modifier.clickable { type = t })
                     }
                 }
-                OutlinedTextField(
+                SgTextField(
                     value = date, onValueChange = { date = it },
-                    label = { Text("日期 yyyy-MM-dd") }, singleLine = true
+                    label = "日期 yyyy-MM-dd", singleLine = true
                 )
-                OutlinedTextField(
+                SgTextField(
                     value = time, onValueChange = { time = it },
-                    label = { Text("时间 HH:mm") }, singleLine = true
+                    label = "时间 HH:mm", singleLine = true
                 )
-                OutlinedTextField(
+                SgTextField(
                     value = note, onValueChange = { note = it },
-                    label = { Text("备注（可空）") }, singleLine = true
+                    label = "备注（可空）", singleLine = true
                 )
                 if (error.isNotEmpty()) {
                     Text(error, style = SgType.meta, color = c.accent2)
@@ -309,13 +309,13 @@ private fun TemplateDialog(
         title = { Text(if (initial == null) "新增任务模板" else "编辑任务模板", style = SgType.cardTitle) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
+                SgTextField(
                     value = title, onValueChange = { title = it },
-                    label = { Text("任务标题，如 资料分析 · 3 组") }, singleLine = true
+                    label = "任务标题，如 资料分析 · 3 组", singleLine = true
                 )
-                OutlinedTextField(
+                SgTextField(
                     value = amount, onValueChange = { amount = it.filter { ch -> ch.isDigit() }.take(4) },
-                    label = { Text("数量") }, singleLine = true
+                    label = "数量", singleLine = true
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf("题", "篇", "道", "组", "分钟").forEach { u ->

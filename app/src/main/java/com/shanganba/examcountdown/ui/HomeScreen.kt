@@ -137,11 +137,11 @@ fun HomeScreen(
             onDismissRequest = { showAddTask = false },
             title = { Text("自定义今天的任务", style = SgType.cardTitle) },
             text = {
-                OutlinedTextField(
+                SgTextField(
                     value = text,
                     onValueChange = { text = it.take(30) },
                     singleLine = true,
-                    label = { Text("任务内容") }
+                    label = "任务内容"
                 )
             },
             confirmButton = {

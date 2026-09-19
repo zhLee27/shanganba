@@ -14,11 +14,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -27,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -232,5 +236,64 @@ fun SgScreenTitle(title: String, right: @Composable RowScope.() -> Unit = {}) {
         Text(title, style = SgType.pageTitle, color = c.inkTitle)
         Spacer(Modifier.weight(1f))
         right()
+    }
+}
+
+/**
+ * 统一输入框：填色背景 + 明显边框 + 高亮标签，让人一眼看出这里可以输入。
+ * 之前直接用 OutlinedTextField，边框颜色太浅，看着像普通文字。
+ */
+@Composable
+fun SgTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    singleLine: Boolean = true,
+    minLines: Int = 1,
+    keyboardType: KeyboardType = KeyboardType.Text
+) {
+    val c = LocalSgColors.current
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label, style = SgType.meta) },
+        placeholder = { Text("点这里输入", style = SgType.meta, color = c.inkFaint) },
+        singleLine = singleLine,
+        minLines = minLines,
+        textStyle = SgType.body,
+        shape = RoundedCornerShape(14.dp),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = c.surface2,
+            unfocusedContainerColor = c.surface2,
+            focusedBorderColor = c.accent,
+            unfocusedBorderColor = c.inkFaint.copy(alpha = 0.5f),
+            focusedLabelColor = c.accent,
+            unfocusedLabelColor = c.inkMuted,
+            cursorColor = c.accent,
+            focusedTextColor = c.ink,
+            unfocusedTextColor = c.ink,
+            focusedPlaceholderColor = c.inkFaint,
+            unfocusedPlaceholderColor = c.inkFaint
+        ),
+        modifier = modifier.fillMaxWidth()
+    )
+}
+
+/** 加减步进按钮 */
+@Composable
+fun SgStepButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val c = LocalSgColors.current
+    Box(
+        modifier = modifier
+            .height(42.dp)
+            .width(46.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(c.surface2)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text, style = SgType.body, color = c.ink)
     }
 }

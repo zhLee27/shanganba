@@ -133,6 +133,21 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         s.copy(modules = s.modules.filterNot { it.id == id })
     }
 
+    /** 上移/下移模块：delta = -1 上移，+1 下移 */
+    fun moveModule(id: String, delta: Int) = mutate { s ->
+        val list = s.modules.sortedBy { it.order }.toMutableList()
+        val index = list.indexOfFirst { it.id == id }
+        val target = index + delta
+        if (index < 0 || target !in list.indices) return@mutate s
+        val item = list.removeAt(index)
+        list.add(target, item)
+        s.copy(modules = list.mapIndexed { i, m -> m.copy(order = i + 1) })
+    }
+
+    fun updateTimerPresets(presets: List<Int>) = mutate { s ->
+        s.copy(settings = s.settings.copy(timerPresets = presets.distinct().sorted()))
+    }
+
     // ---------- 刷题计时 ----------
 
     fun startTimer(timer: ActiveTimer) = mutate { s -> s.copy(activeTimer = timer) }

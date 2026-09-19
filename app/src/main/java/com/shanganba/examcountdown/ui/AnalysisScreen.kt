@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,6 +26,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import com.shanganba.examcountdown.data.PersistedState
 import com.shanganba.examcountdown.util.Dates
@@ -315,9 +318,24 @@ fun CheckinScreen(state: PersistedState, onBack: () -> Unit) {
             SgCard {
                 SgSectionHeader("最近 4 周打卡", "颜色越深完成度越高")
                 Spacer(Modifier.height(10.dp))
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    listOf("一", "二", "三", "四", "五", "六", "日").forEach { w ->
+                        Text(
+                            w,
+                            style = SgType.meta,
+                            color = c.inkFaint,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                Spacer(Modifier.height(6.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     for (week in 3 downTo 0) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             for (day in 0..6) {
                                 val date = today.minusDays((week * 7 + (6 - day)).toLong())
                                 val record = state.days[date.toString()]
@@ -328,7 +346,8 @@ fun CheckinScreen(state: PersistedState, onBack: () -> Unit) {
                                 }
                                 Box(
                                     modifier = Modifier
-                                        .size(38.dp)
+                                        .weight(1f)
+                                        .aspectRatio(1f)
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(
                                             if (ratio == 0f) c.surface2
@@ -352,26 +371,40 @@ fun CheckinScreen(state: PersistedState, onBack: () -> Unit) {
                 Spacer(Modifier.height(10.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     badges.chunked(3).forEach { row ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             row.forEach { (emoji, label, unlocked) ->
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     modifier = Modifier
                                         .weight(1f)
+                                        .height(104.dp)
                                         .clip(RoundedCornerShape(20.dp))
                                         .background(if (unlocked) c.accent.copy(alpha = 0.14f) else c.surface2)
-                                        .padding(vertical = 12.dp)
+                                        .padding(horizontal = 6.dp, vertical = 12.dp),
+                                    verticalArrangement = Arrangement.Center
                                 ) {
                                     Text(emoji, style = SgType.statValue)
                                     Spacer(Modifier.height(6.dp))
                                     Text(
                                         label,
-                                        style = SgType.meta,
-                                        color = if (unlocked) c.ink else c.inkFaint
+                                        style = SgType.meta.copy(fontSize = 11.sp, lineHeight = 15.sp),
+                                        color = if (unlocked) c.ink else c.inkFaint,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2,
+                                        modifier = Modifier.fillMaxWidth()
                                     )
                                 }
                             }
-                            repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                            repeat(3 - row.size) {
+                                Spacer(
+                                    Modifier
+                                        .weight(1f)
+                                        .height(104.dp)
+                                )
+                            }
                         }
                     }
                 }

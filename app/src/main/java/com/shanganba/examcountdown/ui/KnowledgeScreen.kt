@@ -222,9 +222,9 @@ private fun KnowledgeDialog(
         title = { Text(if (initial == null) "新建知识点" else "编辑知识点", style = SgType.cardTitle) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
+                SgTextField(
                     value = name, onValueChange = { name = it },
-                    label = { Text("名称，如 数量规律") }, singleLine = true
+                    label = "名称，如 数量规律", singleLine = true
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     subjects.forEach { (key, label) ->
@@ -235,16 +235,16 @@ private fun KnowledgeDialog(
                         )
                     }
                 }
-                OutlinedTextField(
+                SgTextField(
                     value = parentInput,
                     onValueChange = { parentInput = it },
-                    label = { Text("上级节点 id（留空为顶级）") },
+                    label = "上级节点 id（留空为顶级）",
                     singleLine = true
                 )
-                OutlinedTextField(
+                SgTextField(
                     value = mastery,
                     onValueChange = { mastery = it.filter { ch -> ch.isDigit() }.take(3) },
-                    label = { Text("手动掌握度 %（没有错题关联时用）") },
+                    label = "手动掌握度 %（没有错题关联时用）",
                     singleLine = true
                 )
             }

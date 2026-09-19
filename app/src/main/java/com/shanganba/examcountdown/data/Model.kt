@@ -147,7 +147,9 @@ data class Settings(
     val tone: String = "hard",             // hard / soft / fun
     val firstLaunchAt: Long = 0L,
     /** 已经提示过更新的版本号，避免每次启动都弹同一个版本 */
-    val lastPromptedUpdateVersionCode: Int = 0
+    val lastPromptedUpdateVersionCode: Int = 0,
+    /** 计时方式的预设时长（分钟），可增删 */
+    val timerPresets: List<Int> = listOf(15, 25, 30)
 )
 
 @Serializable

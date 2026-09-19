@@ -243,23 +243,21 @@ private fun ManualEntryDialog(
                         }
                     }
                 }
-                OutlinedTextField(
+                SgTextField(
                     value = stem, onValueChange = { stem = it },
-                    label = { Text("题干") }, minLines = 3, modifier = Modifier.fillMaxWidth()
+                    label = "题干", minLines = 3, modifier = Modifier.fillMaxWidth()
                 )
                 Text("选项（可留空）", style = SgType.meta, color = c.inkMuted)
                 options.forEachIndexed { index, value ->
-                    OutlinedTextField(
+                    SgTextField(
                         value = value,
                         onValueChange = { options[index] = it },
-                        label = { Text(listOf("A", "B", "C", "D")[index]) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        label = listOf("A", "B", "C", "D")[index]
                     )
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = myAnswer, onValueChange = { myAnswer = it }, label = { Text("我的答案") }, singleLine = true, modifier = Modifier.weight(1f))
-                    OutlinedTextField(value = correct, onValueChange = { correct = it }, label = { Text("正确答案") }, singleLine = true, modifier = Modifier.weight(1f))
+                    SgTextField(value = myAnswer, onValueChange = { myAnswer = it }, label = "我的答案", singleLine = true, modifier = Modifier.weight(1f))
+                    SgTextField(value = correct, onValueChange = { correct = it }, label = "正确答案", singleLine = true, modifier = Modifier.weight(1f))
                 }
                 Text("错因", style = SgType.meta, color = c.inkMuted)
                 Column {
@@ -271,9 +269,9 @@ private fun ManualEntryDialog(
                         }
                     }
                 }
-                OutlinedTextField(
+                SgTextField(
                     value = tip, onValueChange = { tip = it },
-                    label = { Text("解题技巧 / 知识点总结") }, minLines = 2, modifier = Modifier.fillMaxWidth()
+                    label = "解题技巧 / 知识点总结", minLines = 2, modifier = Modifier.fillMaxWidth()
                 )
             }
         },
@@ -354,10 +352,10 @@ fun QuestionDetailScreen(
                 }
                 Spacer(Modifier.height(8.dp))
                 Text("题干", style = SgType.cardTitle, color = c.inkTitle)
-                OutlinedTextField(
+                SgTextField(
                     value = stem,
                     onValueChange = { stem = it },
-                    label = { Text("题干（可编辑）") },
+                    label = "题干（可编辑）",
                     minLines = 2,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -366,8 +364,8 @@ fun QuestionDetailScreen(
                 SgSectionHeader("答案对比", "复盘 ${q.reviewCount} 次")
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(value = myAnswer, onValueChange = { myAnswer = it }, label = { Text("我的答案") }, singleLine = true, modifier = Modifier.weight(1f))
-                    OutlinedTextField(value = correct, onValueChange = { correct = it }, label = { Text("正确答案") }, singleLine = true, modifier = Modifier.weight(1f))
+                    SgTextField(value = myAnswer, onValueChange = { myAnswer = it }, label = "我的答案", singleLine = true, modifier = Modifier.weight(1f))
+                    SgTextField(value = correct, onValueChange = { correct = it }, label = "正确答案", singleLine = true, modifier = Modifier.weight(1f))
                 }
             }
             SgCard {
@@ -386,10 +384,10 @@ fun QuestionDetailScreen(
             SgCard {
                 SgSectionHeader("解题技巧总结", "我写的")
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                SgTextField(
                     value = tip,
                     onValueChange = { tip = it },
-                    label = { Text("下次遇到同类题怎么做") },
+                    label = "下次遇到同类题怎么做",
                     minLines = 3,
                     modifier = Modifier.fillMaxWidth()
                 )

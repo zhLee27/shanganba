@@ -3,6 +3,7 @@ package com.shanganba.examcountdown.ui
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -68,6 +69,37 @@ fun SgApp(vm: AppViewModel) {
         var showResult by remember { mutableStateOf(false) }
         var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
         var updateManifest by remember { mutableStateOf<UpdateManifest?>(null) }
+        var confirmQuitTimer by remember { mutableStateOf(false) }
+
+        // 手机滑动返回：优先关弹窗 → 关子页面 → 回首页 → 才退出应用
+        BackHandler {
+            when {
+                updateManifest != null -> updateManifest = null
+                showResult -> showResult = false
+                state.activeTimer != null -> confirmQuitTimer = true
+                overlay != null -> overlay = null
+                tab != 0 -> tab = 0
+                else -> (ctx as? android.app.Activity)?.finish()
+            }
+        }
+
+        if (confirmQuitTimer) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { confirmQuitTimer = false },
+                title = { Text("要放弃本次计时吗？", style = SgType.cardTitle) },
+                text = { Text("放弃后这次计时不会保存。", style = SgType.bodyLong, color = c.inkMuted) },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = {
+                        confirmQuitTimer = false
+                        showResult = false
+                        vm.cancelTimer()
+                    }) { Text("放弃") }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = { confirmQuitTimer = false }) { Text("继续计时") }
+                }
+            )
+        }
 
         LaunchedEffect(Unit) {
             while (true) {

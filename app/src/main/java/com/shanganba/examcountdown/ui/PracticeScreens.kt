@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.shanganba.examcountdown.data.ActiveTimer
 import com.shanganba.examcountdown.data.PersistedState
@@ -66,6 +67,8 @@ fun PracticeTab(
     var countDown by remember { mutableStateOf(true) }
     var minutes by remember { mutableIntStateOf(25) }
     var showNewModule by remember { mutableStateOf(false) }
+    var editingModule by remember { mutableStateOf<SubjectModule?>(null) }
+    var showCustomMinutes by remember { mutableStateOf(false) }
 
     val module = state.modules.firstOrNull { it.id == moduleId } ?: state.modules.firstOrNull()
 
@@ -85,9 +88,10 @@ fun PracticeTab(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         SgCard {
-            SgSectionHeader("本次刷什么", "模块可自定义")
+            SgSectionHeader("本次刷什么", "点名字切换，✎ 改，✕ 删")
             Spacer(Modifier.height(4.dp))
-            state.modules.forEachIndexed { index, m ->
+            val ordered = state.modules.sortedBy { it.order }
+            ordered.forEachIndexed { index, m ->
                 val color = moduleColorOf(m.id, index)
                 val picked = m.id == moduleId
                 Row(
@@ -97,11 +101,11 @@ fun PracticeTab(
                         .clip(RoundedCornerShape(16.dp))
                         .background(if (picked) color.copy(alpha = 0.14f) else Color.Transparent)
                         .clickable { moduleId = m.id }
-                        .padding(horizontal = 10.dp, vertical = 10.dp)
+                        .padding(start = 10.dp, end = 4.dp, top = 6.dp, bottom = 6.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(if (picked) 12.dp else 9.dp)
+                            .size(if (picked) 11.dp else 8.dp)
                             .clip(CircleShape)
                             .background(if (picked) color else c.inkFaint)
                     )
@@ -117,6 +121,14 @@ fun PracticeTab(
                         style = SgType.meta,
                         color = c.inkMuted
                     )
+                    Spacer(Modifier.width(6.dp))
+                    IconTextButton("↑") { vm.moveModule(m.id, -1) }
+                    IconTextButton("↓") { vm.moveModule(m.id, 1) }
+                    IconTextButton("✎") { editingModule = m }
+                    IconTextButton("✕", danger = true) {
+                        vm.deleteModule(m.id)
+                        if (moduleId == m.id) moduleId = ""
+                    }
                 }
             }
             Spacer(Modifier.height(4.dp))
@@ -136,7 +148,8 @@ fun PracticeTab(
         SgCard {
             SgSectionHeader("本次题量", "按纸质卷实际题数")
             Row(verticalAlignment = Alignment.CenterVertically) {
-                CounterButton("−") { questionCount = (questionCount - 5).coerceAtLeast(1) }
+                val step = if ((module?.defaultQuestionCount ?: 20) <= 5) 1 else 5
+                CounterButton("−$step") { questionCount = (questionCount - step).coerceAtLeast(1) }
                 Text(
                     "$questionCount",
                     style = SgType.bigStat,
@@ -145,7 +158,7 @@ fun PracticeTab(
                         .width(80.dp)
                         .padding(horizontal = 8.dp)
                 )
-                CounterButton("＋") { questionCount = (questionCount + 5).coerceAtMost(200) }
+                CounterButton("＋$step") { questionCount = (questionCount + step).coerceAtMost(200) }
                 Spacer(Modifier.weight(1f))
                 Text(
                     "约 ${if (questionCount > 0) minutes * 60 / questionCount else 0} 秒 / 题",
@@ -163,21 +176,37 @@ fun PracticeTab(
                 SegButton("倒计时", countDown, Modifier.weight(1f)) { countDown = true }
             }
             Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(15, 25, 30).forEach { m ->
+            Text("预设时长（点一下选用）", style = SgType.meta, color = c.inkMuted)
+            Spacer(Modifier.height(6.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                state.settings.timerPresets.forEach { m ->
                     SgChip(
                         "$m 分",
                         if (minutes == m) c.accent else c.inkMuted,
                         modifier = Modifier.clickable { minutes = m }
                     )
                 }
-                SgChip("自定义", c.inkMuted, modifier = Modifier.clickable { minutes = (minutes + 5).coerceAtMost(180) })
+                SgChip("自定义", c.inkMuted, modifier = Modifier.clickable { showCustomMinutes = true })
             }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SgSoftButton("＋ 把 $minutes 分存为预设") {
+                    vm.updateTimerPresets(state.settings.timerPresets + minutes)
+                }
+                if (state.settings.timerPresets.contains(minutes)) {
+                    SgSoftButton("删除该预设") {
+                        vm.updateTimerPresets(state.settings.timerPresets - minutes)
+                    }
+                }
+            }
+            Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                CounterButton("−5") { minutes = (minutes - 5).coerceAtLeast(1) }
+                CounterButton("−1") { minutes = (minutes - 1).coerceAtLeast(1) }
                 Text("$minutes 分钟", style = SgType.body, color = c.ink, modifier = Modifier.padding(horizontal = 12.dp))
-                CounterButton("＋5") { minutes = (minutes + 5).coerceAtMost(180) }
+                CounterButton("＋1") { minutes = (minutes + 1).coerceAtMost(180) }
             }
         }
 
@@ -227,13 +256,43 @@ fun PracticeTab(
     }
 
     if (showNewModule) {
-        NewModuleDialog(
+        ModuleEditDialog(
+            initial = null,
             onDismiss = { showNewModule = false },
-            onSave = { m ->
-                vm.upsertModule(m)
-                moduleId = m.id
-                showNewModule = false
-            }
+            onSave = { m -> vm.upsertModule(m); moduleId = m.id; showNewModule = false },
+            onDelete = null
+        )
+    }
+
+    if (editingModule != null) {
+        ModuleEditDialog(
+            initial = editingModule,
+            onDismiss = { editingModule = null },
+            onSave = { m -> vm.upsertModule(m); editingModule = null },
+            onDelete = { m -> vm.deleteModule(m.id); editingModule = null }
+        )
+    }
+
+    if (showCustomMinutes) {
+        var text by remember { mutableStateOf(minutes.toString()) }
+        AlertDialog(
+            onDismissRequest = { showCustomMinutes = false },
+            title = { Text("自定义时长", style = SgType.cardTitle) },
+            text = {
+                SgTextField(
+                    value = text,
+                    onValueChange = { v -> text = v.filter { it.isDigit() }.take(3) },
+                    label = "分钟数（1–180）",
+                    keyboardType = KeyboardType.Number
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    text.toIntOrNull()?.let { minutes = it.coerceIn(1, 180) }
+                    showCustomMinutes = false
+                }) { Text("确定") }
+            },
+            dismissButton = { TextButton(onClick = { showCustomMinutes = false }) { Text("取消") } }
         )
     }
 }
@@ -269,25 +328,60 @@ private fun SegButton(text: String, on: Boolean, modifier: Modifier = Modifier, 
 }
 
 @Composable
-private fun NewModuleDialog(onDismiss: () -> Unit, onSave: (SubjectModule) -> Unit) {
-    var name by remember { mutableStateOf("") }
-    var subject by remember { mutableStateOf("XINGCE") }
-    var count by remember { mutableStateOf("20") }
-    var minutes by remember { mutableStateOf("25") }
+private fun IconTextButton(text: String, danger: Boolean = false, onClick: () -> Unit) {
+    val c = LocalSgColors.current
+    Box(
+        modifier = Modifier
+            .size(30.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text, style = SgType.chip, color = if (danger) c.accent2 else c.inkMuted)
+    }
+}
+
+/** 新建 / 编辑刷题模块：名称、行测申论、默认题量、默认时长，编辑时还能删除 */
+@Composable
+private fun ModuleEditDialog(
+    initial: SubjectModule?,
+    onDismiss: () -> Unit,
+    onSave: (SubjectModule) -> Unit,
+    onDelete: ((SubjectModule) -> Unit)?
+) {
+    val c = LocalSgColors.current
+    var name by remember { mutableStateOf(initial?.name ?: "") }
+    var subject by remember { mutableStateOf(initial?.subject ?: "XINGCE") }
+    var count by remember { mutableStateOf((initial?.defaultQuestionCount ?: 20).toString()) }
+    var minutes by remember { mutableStateOf(((initial?.defaultSeconds ?: 1500) / 60).toString()) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("新建刷题模块", style = SgType.cardTitle) },
+        title = { Text(if (initial == null) "新建刷题模块" else "编辑刷题模块", style = SgType.cardTitle) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("模块名，如 资料分析 · 增长率") }, singleLine = true)
+                SgTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = "模块名，如 资料分析 · 增长率"
+                )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SgChip("行测", if (subject == "XINGCE") LocalSgColors.current.accent else LocalSgColors.current.inkMuted,
+                    SgChip("行测", if (subject == "XINGCE") c.accent else c.inkMuted,
                         modifier = Modifier.clickable { subject = "XINGCE" })
-                    SgChip("申论", if (subject == "SHENLUN") LocalSgColors.current.accent else LocalSgColors.current.inkMuted,
+                    SgChip("申论", if (subject == "SHENLUN") c.accent else c.inkMuted,
                         modifier = Modifier.clickable { subject = "SHENLUN" })
                 }
-                OutlinedTextField(value = count, onValueChange = { count = it.filter { ch -> ch.isDigit() }.take(3) }, label = { Text("默认题量") }, singleLine = true)
-                OutlinedTextField(value = minutes, onValueChange = { minutes = it.filter { ch -> ch.isDigit() }.take(3) }, label = { Text("默认时长（分钟）") }, singleLine = true)
+                SgTextField(
+                    value = count,
+                    onValueChange = { count = it.filter { ch -> ch.isDigit() }.take(3) },
+                    label = "默认题量",
+                    keyboardType = KeyboardType.Number
+                )
+                SgTextField(
+                    value = minutes,
+                    onValueChange = { minutes = it.filter { ch -> ch.isDigit() }.take(3) },
+                    label = "默认时长（分钟）",
+                    keyboardType = KeyboardType.Number
+                )
             }
         },
         confirmButton = {
@@ -295,19 +389,26 @@ private fun NewModuleDialog(onDismiss: () -> Unit, onSave: (SubjectModule) -> Un
                 if (name.isNotBlank()) {
                     onSave(
                         SubjectModule(
-                            id = "m_" + UUID.randomUUID().toString().take(6),
+                            id = initial?.id ?: ("m_" + UUID.randomUUID().toString().take(6)),
                             subject = subject,
                             name = name.trim(),
-                            order = 90,
+                            order = initial?.order ?: 90,
                             defaultQuestionCount = count.toIntOrNull() ?: 20,
                             defaultSeconds = (minutes.toIntOrNull() ?: 25) * 60,
-                            custom = true
+                            custom = initial?.custom ?: true
                         )
                     )
                 }
             }) { Text("保存") }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } }
+        dismissButton = {
+            Row {
+                if (initial != null && onDelete != null) {
+                    TextButton(onClick = { onDelete(initial) }) { Text("删除") }
+                }
+                TextButton(onClick = onDismiss) { Text("取消") }
+            }
+        }
     )
 }
 
@@ -527,12 +628,12 @@ fun PracticeResultScreen(
         SgCard {
             SgSectionHeader("本次备注", "随手记")
             Spacer(Modifier.height(8.dp))
-            OutlinedTextField(
+            SgTextField(
                 value = note,
                 onValueChange = { note = it },
-                label = { Text("比如：增长率比较又忘了看基期") },
-                minLines = 2,
-                modifier = Modifier.fillMaxWidth()
+                label = "本次备注，比如：增长率比较又忘了看基期",
+                singleLine = false,
+                minLines = 2
             )
         }
         if (timer.markedCount > 0) {

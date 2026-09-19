@@ -437,11 +437,10 @@ private fun TextInputDialog(
         onDismissRequest = onDismiss,
         title = { Text(title, style = SgType.cardTitle) },
         text = {
-            OutlinedTextField(
+            SgTextField(
                 value = value,
                 onValueChange = { value = it },
-                singleLine = true,
-                label = { Text(label) }
+                label = label
             )
         },
         confirmButton = { TextButton(onClick = { onSave(value.trim()) }) { Text("保存") } },
