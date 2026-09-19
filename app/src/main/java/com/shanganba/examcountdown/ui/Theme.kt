@@ -89,7 +89,12 @@ private val moduleIdToColor = mapOf(
 )
 
 fun moduleColorOf(moduleId: String, fallbackIndex: Int = 0): Color =
-    moduleIdToColor[moduleId] ?: moduleColor(fallbackIndex)
+    moduleIdToColor[moduleId]
+        ?: listOf(
+            "m_zz" to 1, "m_cs" to 4, "m_yy" to 0, "m_sl" to 1, "m_tx" to 2,
+            "m_dy" to 2, "m_lb" to 2, "m_lj" to 2, "m_zl" to 3, "m_gn" to 5, "m_gc" to 5
+        ).firstOrNull { moduleId.startsWith(it.first) }?.let { moduleColor(it.second) }
+        ?: moduleColor(fallbackIndex)
 
 fun freshColors(dark: Boolean): SgColors = if (dark) SgColors(
     bg = Color(0xFF0A1511), surface = Color(0xFF131C18), surface2 = Color(0xFF1B2620),

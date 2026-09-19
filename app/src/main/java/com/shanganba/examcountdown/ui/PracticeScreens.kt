@@ -23,6 +23,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -82,6 +84,7 @@ fun PracticeTab(
     var pendingClearPresets by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(setOf<String>()) }
     var reorderMode by remember { mutableStateOf(false) }
+    var listSubject by remember { mutableStateOf("XINGCE") }
 
     fun pickModule(m: SubjectModule) {
         moduleId = m.id
@@ -146,8 +149,29 @@ fun PracticeTab(
                 }
             }
             Spacer(Modifier.height(4.dp))
-            // 只列大题型；小题型留给任务模板选（三级结构保留）
-            val ordered = currentOrdered.filter { it.parentId.isEmpty() }
+            val tabIdx = if (listSubject == "XINGCE") 0 else 1
+            TabRow(
+                selectedTabIndex = tabIdx,
+                containerColor = Color.Transparent,
+                contentColor = c.accent
+            ) {
+                listOf("行测", "申论").forEachIndexed { i, label ->
+                    Tab(
+                        selected = tabIdx == i,
+                        onClick = { listSubject = if (i == 0) "XINGCE" else "SHENLUN" },
+                        text = {
+                            Text(
+                                label,
+                                style = SgType.cardTitle,
+                                color = if (tabIdx == i) c.accent else c.inkMuted
+                            )
+                        }
+                    )
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+            // 只列当前科目的大题型；小题型点前面的小三角展开
+            val ordered = currentOrdered.filter { it.parentId.isEmpty() && it.subject == listSubject }
             var lastSubject = ""
             ordered.forEachIndexed { index, m ->
                 if (m.subject != lastSubject) {
@@ -180,7 +204,7 @@ fun PracticeTab(
                                 onDrag = { change, amount ->
                                     change.consume()
                                     dragAccum += amount.y
-                                    val list = currentOrdered.filter { it.parentId.isEmpty() }
+                                    val list = currentOrdered.filter { it.parentId.isEmpty() && it.subject == listSubject }
                                     val cur = list.indexOfFirst { it.id == m.id }
                                     if (cur >= 0) {
                                         if (dragAccum > rowHeightPx * 0.6f && cur < list.lastIndex) {
@@ -194,7 +218,7 @@ fun PracticeTab(
                                 }
                             )
                         }
-                        .padding(start = 10.dp, end = 4.dp, top = 6.dp, bottom = 6.dp)
+                        .padding(start = 2.dp, end = 2.dp, top = 6.dp, bottom = 6.dp)
                         .zIndex(if (m.id == dragId) 1f else 0f)
                         .graphicsLayer {
                             if (m.id == dragId) {
@@ -243,14 +267,7 @@ fun PracticeTab(
                     Spacer(Modifier.width(6.dp))
                     IconTextButton("✎") { editingModule = m }
                     IconTextButton("✕", danger = true) { pendingDeleteModule = m }
-                    Box(
-                        modifier = Modifier
-                            .size(30.dp)
-                            .clip(RoundedCornerShape(50))
-                            .background(color.copy(alpha = 0.16f))
-                            .clickable { startWith(m) },
-                        contentAlignment = Alignment.Center
-                    ) { Text("▶", style = SgType.chip, color = color) }
+                    PlayButton(color = color, onClick = { startWith(m) })
                 }
             // 展开后列出小题型，每个都能单独计时
             if (expanded.contains(m.id)) {
@@ -276,14 +293,7 @@ fun PracticeTab(
                         )
                         Text("${child.defaultQuestionCount} 题", style = SgType.meta, color = c.inkMuted)
                         Spacer(Modifier.width(6.dp))
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(RoundedCornerShape(50))
-                                .background(c.accent.copy(alpha = 0.14f))
-                                .clickable { startWith(child) },
-                            contentAlignment = Alignment.Center
-                        ) { Text("▶", style = SgType.chip, color = c.accent) }
+                        PlayButton(color = moduleColorOf(child.id), onClick = { startWith(child) }, diameter = 32)
                     }
                 }
             }
@@ -553,6 +563,29 @@ private fun IconTextButton(text: String, danger: Boolean = false, onClick: () ->
         contentAlignment = Alignment.Center
     ) {
         Text(text, style = SgType.chip, color = if (danger) c.accent2 else c.inkMuted)
+    }
+}
+
+/** 计时按钮：实心圆 + 居中三角形（用 Canvas 画，保证三角形绝对居中） */
+@Composable
+private fun PlayButton(color: Color, onClick: () -> Unit, diameter: Int = 38) {
+    Box(
+        modifier = Modifier
+            .size(diameter.dp)
+            .clip(CircleShape)
+            .background(color)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.size((diameter / 2.6f).dp)) {
+            val path = androidx.compose.ui.graphics.Path().apply {
+                moveTo(0f, 0f)
+                lineTo(size.width, size.height / 2f)
+                lineTo(0f, size.height)
+                close()
+            }
+            drawPath(path, Color.White)
+        }
     }
 }
 

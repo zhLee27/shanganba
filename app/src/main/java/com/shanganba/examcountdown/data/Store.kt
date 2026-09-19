@@ -46,11 +46,29 @@ class AppStore(private val context: Context) {
 
     /** 1.5.0 起行测改成新题型结构（政治理论独立、判断推理拆四块），保留刷题与错题记录 */
     private fun migrate(state: PersistedState): PersistedState {
-        if (state.schemaVersion >= 3) return state
-        val remap = mapOf("m_panduan" to "m_tuxing", "m_duice" to "m_zonghe")
-        fun fix(id: String) = remap[id] ?: id
+        if (state.schemaVersion >= 4) return state
+        val known = defaultModules().map { it.id }.toSet()
+        val remap = mapOf(
+            "m_panduan" to "m_tuxing", "m_duice" to "m_zonghe",
+            "m_zz_dz" to "m_zz_sz", "m_zz_jh" to "m_zz_sz", "m_zz_wj" to "m_zz_sz",
+            "m_zz_xf" to "m_cs_kj", "m_zz_ah" to "m_zz_sz",
+            "m_cs_rw" to "m_cs_ls", "m_cs_jj" to "m_cs_zz",
+            "m_sl_yunsuan" to "m_sl_jichu", "m_zl_zzl" to "m_zl_zz"
+        )
+        val prefixes = listOf(
+            "m_zz" to "m_zhengzhi", "m_cs" to "m_changshi", "m_yy" to "m_yanyu",
+            "m_sl" to "m_shuliang", "m_tx" to "m_tuxing", "m_dy" to "m_dingyi",
+            "m_lb" to "m_leibi", "m_lj" to "m_luoji", "m_zl" to "m_ziliao",
+            "m_gn" to "m_guina", "m_gc" to "m_guanche", "m_pd" to "m_tuxing"
+        )
+        fun fix(id: String): String {
+            if (id in known) return id
+            remap[id]?.let { return it }
+            prefixes.firstOrNull { id.startsWith(it.first) }?.let { return it.second }
+            return id
+        }
         return state.copy(
-            schemaVersion = 3,
+            schemaVersion = 4,
             modules = defaultModules(),
             scoreConfigs = defaultScoreConfigs(),
             sessions = state.sessions.map { it.copy(moduleId = fix(it.moduleId)) },

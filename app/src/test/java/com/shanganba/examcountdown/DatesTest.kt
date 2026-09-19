@@ -62,9 +62,9 @@ class DatesTest {
         val configs = defaultScoreConfigs()
         val xingce = configs.first { it.subject == "XINGCE" }
         val total = xingce.items.sumOf { it.questionCount * it.scorePerQuestion }
-        // 2027 新结构：125 题；官方给出的单题分相加为 98.5（政治理论 10.5 + 常识 9 + 言语 20 + 数量 13.5 + 判断 27.5 + 资料 18）
+        // 2027 新结构：125 题；按最新分值表相加为 108（10.5+12+22.5+13.5+4.5+9+8+10+18）
         assertEquals(125, xingce.items.sumOf { it.questionCount })
-        assertEquals(98.5, total, 0.01)
+        assertEquals(108.0, total, 0.01)
 
         val shenlun = configs.first { it.subject == "SHENLUN" }
         assertEquals(100.0, shenlun.items.sumOf { it.scorePerQuestion }, 0.001)
