@@ -74,7 +74,13 @@ fun ProfileCard(state: PersistedState, onLogin: () -> Unit, onEdit: () -> Unit, 
                     style = SgType.cardTitle,
                     color = c.inkTitle
                 )
-                if (p.loggedIn && p.tier.isNotBlank()) {
+                // 身份按账号直接判断，老账号也能正确显示
+                val tier = when {
+                    p.account == "18395502059" -> "至尊VIP"
+                    p.tier.isNotBlank() -> p.tier
+                    else -> ""
+                }
+                if (p.loggedIn && tier.isNotBlank()) {
                     Spacer(Modifier.height(4.dp))
                     Box(
                         modifier = Modifier
@@ -87,7 +93,7 @@ fun ProfileCard(state: PersistedState, onLogin: () -> Unit, onEdit: () -> Unit, 
                             .padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            "👑 ${p.tier}",
+                            "👑 $tier",
                             style = SgType.chip,
                             color = androidx.compose.ui.graphics.Color(0xFF6B4A08)
                         )

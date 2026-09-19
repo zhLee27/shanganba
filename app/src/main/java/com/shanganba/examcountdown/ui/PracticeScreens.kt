@@ -2,6 +2,7 @@ package com.shanganba.examcountdown.ui
 
 import android.os.SystemClock
 import androidx.compose.foundation.Canvas
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -150,6 +151,17 @@ fun PracticeTab(
             Spacer(Modifier.height(6.dp))
             // 只列当前科目的大题型；小题型点前面的小三角展开
             val ordered = currentOrdered.filter { it.parentId.isEmpty() && it.subject == listSubject }
+            androidx.compose.animation.AnimatedContent(
+                targetState = listSubject,
+                transitionSpec = {
+                    val forward = targetState == "SHENLUN"
+                    (androidx.compose.animation.slideInHorizontally { if (forward) it else -it } +
+                        androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(220))) togetherWith
+                        (androidx.compose.animation.slideOutHorizontally { if (forward) -it else it } +
+                            androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(160)))
+                },
+                label = "subject"
+            ) { _ ->
             // 切到没有选中项的科目时自动选中第一个大题型，避免整页都不高亮
             LaunchedEffect(listSubject, ordered.map { it.id }) {
                 val visible = ordered.map { it.id } +
@@ -265,6 +277,7 @@ fun PracticeTab(
                         PlayButton(color = moduleColorOf(child.id), onClick = { startWith(child) }, diameter = 28)
                     }
                 }
+            }
             }
             }
             Spacer(Modifier.height(4.dp))

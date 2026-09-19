@@ -197,79 +197,59 @@ fun SettingsScreen(
 
         SgCard {
             SgSectionHeader("提醒")
+            // 每日计划提醒：只展示已设置的日期与时间
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text("每日计划提醒", style = SgType.body, color = c.ink)
                     Text(
-                        "当天任务没全部完成才提醒 · 已选 ${s.dailyReminderDays.size} 天",
+                        if (s.dailyReminderDays.isEmpty()) "还没有设置提醒日期"
+                        else "当天任务没全部完成才提醒",
                         style = SgType.meta, color = c.inkMuted
                     )
-                    Spacer(Modifier.height(6.dp))
-                    SgSoftButton("设置提醒时间") { showReminderDialog = true }
-                    Spacer(Modifier.height(6.dp))
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(5.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                    ) {
-                        listOf("一", "二", "三", "四", "五", "六", "日").forEachIndexed { i, label ->
-                            val day = i + 1
-                            val on = s.dailyReminderDays.contains(day)
-                            SgChip(
-                                label,
-                                if (on) c.accent else c.inkFaint,
-                                modifier = Modifier.clickable {
-                                    val next = if (on) s.dailyReminderDays - day else s.dailyReminderDays + day
-                                    vm.updateSettings { it.copy(dailyReminderDays = next.sorted()) }
-                                }
-                            )
-                        }
-                    }
-                    // 每个选中的星期可以单独设时间
-                    if (s.dailyReminderOn && s.dailyReminderDays.isNotEmpty()) {
-                        Spacer(Modifier.height(4.dp))
-                        s.dailyReminderDays.sorted().forEach { day ->
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    "周" + listOf("一", "二", "三", "四", "五", "六", "日")[day - 1],
-                                    style = SgType.meta,
-                                    color = c.inkMuted,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                SgChip(
-                                    formatMinute(s.dailyReminderTimes[day] ?: s.dailyReminderMinute),
-                                    if (s.dailyReminderTimes.containsKey(day)) c.accent else c.inkMuted,
-                                    modifier = Modifier.clickable { editingDay = day }
-                                )
-                            }
-                            Spacer(Modifier.height(3.dp))
-                        }
-                        Text(
-                            "点某天的具体时间可以单独调整（灰色表示沿用统一时间）",
-                            style = SgType.meta,
-                            color = c.inkFaint
-                        )
-                    }
                 }
-                SgSoftButton("改时间") { editDailyTime = true }
-                Spacer(Modifier.width(8.dp))
                 Switch(
                     checked = s.dailyReminderOn,
                     onCheckedChange = { on -> vm.updateSettings { it.copy(dailyReminderOn = on) } }
                 )
             }
+            if (s.dailyReminderDays.isNotEmpty()) {
+                Spacer(Modifier.height(2.dp))
+                s.dailyReminderDays.sorted().forEach { day ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(vertical = 3.dp)
+                    ) {
+                        Text(
+                            "周" + listOf("一", "二", "三", "四", "五", "六", "日")[day - 1],
+                            style = SgType.body,
+                            color = c.ink,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            formatMinute(s.dailyReminderTimes[day] ?: s.dailyReminderMinute),
+                            style = SgType.body,
+                            color = c.accent
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            SgSoftButton("设置提醒日期与时间") { showReminderDialog = true }
             SgDivider()
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { editNodeTime = true }
+                    .padding(vertical = 10.dp)
+            ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text("考前节点提醒", style = SgType.body, color = c.ink)
                     Text(
-                        "笔试前 7 / 3 / 1 天各提醒一次 · ${formatMinute(s.nodeReminderMinute)}",
+                        "笔试前 7 / 3 / 1 天 · ${formatMinute(s.nodeReminderMinute)}（点这行改时间）",
                         style = SgType.meta, color = c.inkMuted
                     )
                 }
-                SgSoftButton("改时间") { editNodeTime = true }
-                Spacer(Modifier.width(8.dp))
                 Switch(
                     checked = s.nodeReminderOn,
                     onCheckedChange = { on -> vm.updateSettings { it.copy(nodeReminderOn = on) } }

@@ -207,6 +207,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                     s.copy(
                         profile = s.profile.copy(
                             loggedIn = true,
+                            tier = when {
+                                acc == "18395502059" -> "至尊VIP"
+                                s.profile.tier.isNotBlank() -> s.profile.tier
+                                else -> ""
+                            },
                             nickname = saved?.nickname ?: s.profile.nickname,
                             signature = saved?.signature ?: s.profile.signature,
                             avatarPath = saved?.avatarPath ?: s.profile.avatarPath

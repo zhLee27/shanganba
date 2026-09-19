@@ -1,6 +1,7 @@
 package com.shanganba.examcountdown.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -102,7 +103,18 @@ fun AnalysisTab(state: PersistedState) {
             selectedIndex = if (subject == "XINGCE") 0 else 1,
             onSelect = { subject = if (it == 0) "XINGCE" else "SHENLUN" }
         )
-        if (subject == "XINGCE") {
+        androidx.compose.animation.AnimatedContent(
+            targetState = subject,
+            transitionSpec = {
+                val forward = targetState == "SHENLUN"
+                (androidx.compose.animation.slideInHorizontally { if (forward) it else -it } +
+                    androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(220))) togetherWith
+                    (androidx.compose.animation.slideOutHorizontally { if (forward) -it else it } +
+                        androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(160)))
+            },
+            label = "subject"
+        ) { sub ->
+        if (sub == "XINGCE") {
         SgCard {
             SgSectionHeader("行测模块正确率", if (hasData) "按安徽省考分值加权" else "还没有刷题数据")
             Spacer(Modifier.height(6.dp))
@@ -214,6 +226,7 @@ fun AnalysisTab(state: PersistedState) {
                     Text(if (st.questions == 0) "—" else "%.0f%%".format(st.accuracy * 100), style = SgType.meta, color = c.inkMuted)
                 }
             }
+        }
         }
         }
     }
