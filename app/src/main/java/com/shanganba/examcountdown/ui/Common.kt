@@ -301,3 +301,28 @@ fun SgStepButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifie
         Text(text, style = SgType.body, color = c.ink)
     }
 }
+
+/** 统一的二次确认弹窗：删除这类不可撤销的操作都走它 */
+@Composable
+fun SgConfirmDialog(
+    title: String,
+    message: String,
+    confirmText: String = "删除",
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val c = LocalSgColors.current
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title, style = SgType.cardTitle) },
+        text = { Text(message, style = SgType.bodyLong, color = c.inkMuted) },
+        confirmButton = {
+            androidx.compose.material3.TextButton(onClick = { onConfirm(); onDismiss() }) {
+                Text(confirmText, color = c.accent2)
+            }
+        },
+        dismissButton = {
+            androidx.compose.material3.TextButton(onClick = onDismiss) { Text("取消") }
+        }
+    )
+}

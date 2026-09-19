@@ -46,11 +46,11 @@ class AppStore(private val context: Context) {
 
     /** 1.5.0 起行测改成新题型结构（政治理论独立、判断推理拆四块），保留刷题与错题记录 */
     private fun migrate(state: PersistedState): PersistedState {
-        if (state.schemaVersion >= 2) return state
+        if (state.schemaVersion >= 3) return state
         val remap = mapOf("m_panduan" to "m_tuxing", "m_duice" to "m_zonghe")
         fun fix(id: String) = remap[id] ?: id
         return state.copy(
-            schemaVersion = 2,
+            schemaVersion = 3,
             modules = defaultModules(),
             scoreConfigs = defaultScoreConfigs(),
             sessions = state.sessions.map { it.copy(moduleId = fix(it.moduleId)) },

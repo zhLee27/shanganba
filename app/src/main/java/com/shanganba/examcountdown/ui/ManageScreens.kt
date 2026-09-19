@@ -339,11 +339,37 @@ private fun TemplateDialog(
                         SgChip("不关联", if (moduleId.isEmpty()) c.accent else c.inkMuted,
                             modifier = Modifier.clickable { moduleId = "" })
                     }
-                    state.modules.take(5).forEach { m ->
-                        Spacer(Modifier.height(6.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            SgChip(m.name, if (moduleId == m.id) moduleColorOf(m.id) else c.inkMuted,
-                                modifier = Modifier.clickable { moduleId = m.id })
+                    // 三级结构：行测 / 申论 → 大题型 → 小题型
+                    listOf("XINGCE" to "行测", "SHENLUN" to "申论").forEach { (subject, label) ->
+                        val parents = state.modules
+                            .filter { it.subject == subject && it.parentId.isEmpty() }
+                            .sortedBy { it.order }
+                        if (parents.isEmpty()) return@forEach
+                        Spacer(Modifier.height(8.dp))
+                        Text(label, style = SgType.chip, color = c.accent)
+                        parents.forEach { parent ->
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier = Modifier.padding(top = 4.dp)
+                            ) {
+                                SgChip(
+                                    parent.name,
+                                    if (moduleId == parent.id) moduleColorOf(parent.id) else c.inkMuted,
+                                    modifier = Modifier.clickable { moduleId = parent.id }
+                                )
+                            }
+                            state.modules.filter { it.parentId == parent.id }.sortedBy { it.order }.forEach { child ->
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.padding(start = 14.dp, top = 3.dp)
+                                ) {
+                                    SgChip(
+                                        "· " + child.name,
+                                        if (moduleId == child.id) moduleColorOf(child.id) else c.inkMuted,
+                                        modifier = Modifier.clickable { moduleId = child.id }
+                                    )
+                                }
+                            }
                         }
                     }
                 }

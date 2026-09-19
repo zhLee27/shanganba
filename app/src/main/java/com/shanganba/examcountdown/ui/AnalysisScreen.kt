@@ -2,6 +2,7 @@ package com.shanganba.examcountdown.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,10 +41,16 @@ import kotlin.math.sin
 
 data class ModuleStat(val id: String, val name: String, val accuracy: Double, val questions: Int, val gain: Double)
 
+/** 第三级小题型的数据汇总到所属大题型（第二级），保证分析口径不变 */
+private fun parentIdOf(state: PersistedState, moduleId: String): String {
+    val m = state.modules.firstOrNull { it.id == moduleId } ?: return moduleId
+    return m.parentId.ifBlank { m.id }
+}
+
 fun moduleStats(state: PersistedState, subject: String): List<ModuleStat> {
     val config = state.scoreConfigs.firstOrNull { it.subject == subject } ?: return emptyList()
     return config.items.map { item ->
-        val sessions = state.sessions.filter { it.moduleId == item.moduleId }
+        val sessions = state.sessions.filter { parentIdOf(state, it.moduleId) == item.moduleId }
         val questions = sessions.sumOf { it.questionCount }
         val correct = sessions.sumOf { it.correctCount }
         val accuracy = if (questions > 0) correct.toDouble() / questions else 0.0
@@ -57,7 +68,7 @@ fun moduleStats(state: PersistedState, subject: String): List<ModuleStat> {
 fun estimateScore(state: PersistedState, subject: String): Double {
     val config = state.scoreConfigs.firstOrNull { it.subject == subject } ?: return 0.0
     return config.items.sumOf { item ->
-        val sessions = state.sessions.filter { it.moduleId == item.moduleId }
+        val sessions = state.sessions.filter { parentIdOf(state, it.moduleId) == item.moduleId }
         val questions = sessions.sumOf { it.questionCount }
         val correct = sessions.sumOf { it.correctCount }
         val accuracy = if (questions > 0) correct.toDouble() / questions else 0.0
@@ -68,6 +79,7 @@ fun estimateScore(state: PersistedState, subject: String): Double {
 @Composable
 fun AnalysisTab(state: PersistedState) {
     val c = LocalSgColors.current
+    var subject by remember { mutableStateOf("XINGCE") }
     val xingceStats = moduleStats(state, "XINGCE")
     val shenlunStats = moduleStats(state, "SHENLUN")
     val xingceScore = estimateScore(state, "XINGCE")
@@ -82,6 +94,14 @@ fun AnalysisTab(state: PersistedState) {
             .padding(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // 行测 / 申论分开看
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SgChip("行测", if (subject == "XINGCE") c.accent else c.inkMuted,
+                modifier = Modifier.clickable { subject = "XINGCE" })
+            SgChip("申论", if (subject == "SHENLUN") c.accent else c.inkMuted,
+                modifier = Modifier.clickable { subject = "SHENLUN" })
+        }
+        if (subject == "XINGCE") {
         SgCard {
             SgSectionHeader("行测模块正确率", if (hasData) "按安徽省考分值加权" else "还没有刷题数据")
             Spacer(Modifier.height(6.dp))
@@ -151,6 +171,12 @@ fun AnalysisTab(state: PersistedState) {
 
         SgCard {
             SgSectionHeader("申论各题型", "按得分估")
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "申论估分 %.1f / 100".format(shenlunScore),
+                style = SgType.statValue,
+                color = c.accent
+            )
             Spacer(Modifier.height(6.dp))
             shenlunStats.forEach { st ->
                 val color = moduleColorOf(st.id)
@@ -175,6 +201,7 @@ fun AnalysisTab(state: PersistedState) {
                     Text(if (st.questions == 0) "—" else "%.0f%%".format(st.accuracy * 100), style = SgType.meta, color = c.inkMuted)
                 }
             }
+        }
         }
     }
 }

@@ -28,7 +28,9 @@ data class SubjectModule(
     val order: Int,
     val defaultQuestionCount: Int = 20,
     val defaultSeconds: Int = 1200,
-    val custom: Boolean = false
+    val custom: Boolean = false,
+    /** 空 = 大题型（第二级）；否则指向所属大题型，表示第三级的小题型 */
+    val parentId: String = ""
 )
 
 @Serializable
@@ -189,6 +191,7 @@ fun defaultNodes(): List<ExamNode> = listOf(
 )
 
 fun defaultModules(): List<SubjectModule> = listOf(
+    // —— 第二级：行测大题型 ——
     SubjectModule("m_zhengzhi", "XINGCE", "政治理论", 1, 15, 900),
     SubjectModule("m_changshi", "XINGCE", "常识判断", 2, 15, 900),
     SubjectModule("m_yanyu", "XINGCE", "言语理解", 3, 25, 1500),
@@ -198,10 +201,37 @@ fun defaultModules(): List<SubjectModule> = listOf(
     SubjectModule("m_leibi", "XINGCE", "类比推理", 7, 10, 600),
     SubjectModule("m_luoji", "XINGCE", "逻辑判断", 8, 10, 900),
     SubjectModule("m_ziliao", "XINGCE", "资料分析", 9, 20, 1500),
+    // —— 第二级：申论题型 ——
     SubjectModule("m_guina", "SHENLUN", "申论 · 归纳概括", 10, 1, 900),
     SubjectModule("m_zonghe", "SHENLUN", "申论 · 综合分析/提出对策", 11, 1, 1200),
     SubjectModule("m_guanche", "SHENLUN", "申论 · 贯彻执行", 12, 1, 1500),
-    SubjectModule("m_zuowen", "SHENLUN", "申论 · 议论文大作文", 13, 1, 3000)
+    SubjectModule("m_zuowen", "SHENLUN", "申论 · 议论文大作文", 13, 1, 3000),
+    // —— 第三级：小题型 ——
+    SubjectModule("m_zz_dz", "XINGCE", "大政方针", 101, 5, 300, parentId = "m_zhengzhi"),
+    SubjectModule("m_zz_jh", "XINGCE", "重要讲话", 102, 5, 300, parentId = "m_zhengzhi"),
+    SubjectModule("m_zz_wj", "XINGCE", "中央文件", 103, 5, 300, parentId = "m_zhengzhi"),
+    SubjectModule("m_zz_xf", "XINGCE", "新法新规", 104, 5, 300, parentId = "m_zhengzhi"),
+    SubjectModule("m_zz_ah", "XINGCE", "安徽时政", 105, 5, 300, parentId = "m_zhengzhi"),
+    SubjectModule("m_cs_fl", "XINGCE", "法律", 201, 3, 180, parentId = "m_changshi"),
+    SubjectModule("m_cs_rw", "XINGCE", "人文", 202, 3, 180, parentId = "m_changshi"),
+    SubjectModule("m_cs_ls", "XINGCE", "历史", 203, 3, 180, parentId = "m_changshi"),
+    SubjectModule("m_cs_dl", "XINGCE", "地理", 204, 3, 180, parentId = "m_changshi"),
+    SubjectModule("m_cs_kj", "XINGCE", "科技", 205, 3, 180, parentId = "m_changshi"),
+    SubjectModule("m_cs_jj", "XINGCE", "经济", 206, 3, 180, parentId = "m_changshi"),
+    SubjectModule("m_yy_ljtk", "XINGCE", "逻辑填空", 301, 10, 600, parentId = "m_yanyu"),
+    SubjectModule("m_yy_pdyd", "XINGCE", "片段阅读", 302, 10, 600, parentId = "m_yanyu"),
+    SubjectModule("m_yy_yjbd", "XINGCE", "语句表达", 303, 5, 300, parentId = "m_yanyu"),
+    SubjectModule("m_sl_yunsuan", "XINGCE", "数学运算", 401, 15, 1200, parentId = "m_shuliang"),
+    SubjectModule("m_zl_zzl", "XINGCE", "增长率", 501, 5, 375, parentId = "m_ziliao"),
+    SubjectModule("m_zl_bz", "XINGCE", "比重", 502, 5, 375, parentId = "m_ziliao"),
+    SubjectModule("m_zl_pjs", "XINGCE", "平均数", 503, 5, 375, parentId = "m_ziliao"),
+    SubjectModule("m_zl_bs", "XINGCE", "倍数与倍数关系", 504, 5, 375, parentId = "m_ziliao"),
+    SubjectModule("m_gn_wt", "SHENLUN", "概括问题", 601, 1, 300, parentId = "m_guina"),
+    SubjectModule("m_gn_cx", "SHENLUN", "概括成效与经验", 602, 1, 300, parentId = "m_guina"),
+    SubjectModule("m_gc_gkx", "SHENLUN", "公开信", 701, 1, 500, parentId = "m_guanche"),
+    SubjectModule("m_gc_dp", "SHENLUN", "短评", 702, 1, 500, parentId = "m_guanche"),
+    SubjectModule("m_gc_dybg", "SHENLUN", "调研报告", 703, 1, 600, parentId = "m_guanche"),
+    SubjectModule("m_gc_gzjb", "SHENLUN", "工作简报", 704, 1, 600, parentId = "m_guanche")
 )
 
 fun defaultTemplates(): List<TaskTemplate> = listOf(

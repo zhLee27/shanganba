@@ -73,6 +73,19 @@ private val moduleIdToColor = mapOf(
     "m_duice" to ModuleColors[5],
     "m_guanche" to ModuleColors[5],
     "m_zuowen" to ModuleColors[5]
+    ,
+    // 第三级小题型跟随所属大题型配色
+    "m_zz_dz" to ModuleColors[1], "m_zz_jh" to ModuleColors[1], "m_zz_wj" to ModuleColors[1],
+    "m_zz_xf" to ModuleColors[1], "m_zz_ah" to ModuleColors[1],
+    "m_cs_fl" to ModuleColors[4], "m_cs_rw" to ModuleColors[4], "m_cs_ls" to ModuleColors[4],
+    "m_cs_dl" to ModuleColors[4], "m_cs_kj" to ModuleColors[4], "m_cs_jj" to ModuleColors[4],
+    "m_yy_ljtk" to ModuleColors[0], "m_yy_pdyd" to ModuleColors[0], "m_yy_yjbd" to ModuleColors[0],
+    "m_sl_yunsuan" to ModuleColors[1],
+    "m_zl_zzl" to ModuleColors[3], "m_zl_bz" to ModuleColors[3],
+    "m_zl_pjs" to ModuleColors[3], "m_zl_bs" to ModuleColors[3],
+    "m_gn_wt" to ModuleColors[5], "m_gn_cx" to ModuleColors[5],
+    "m_gc_gkx" to ModuleColors[5], "m_gc_dp" to ModuleColors[5],
+    "m_gc_dybg" to ModuleColors[5], "m_gc_gzjb" to ModuleColors[5]
 )
 
 fun moduleColorOf(moduleId: String, fallbackIndex: Int = 0): Color =

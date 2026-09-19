@@ -35,6 +35,9 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -77,6 +80,8 @@ fun PracticeTab(
     var showCustomMinutes by remember { mutableStateOf(false) }
     var presetDeleteMode by remember { mutableStateOf(false) }
     var dragAccum by remember { mutableFloatStateOf(0f) }
+    var dragId by remember { mutableStateOf<String?>(null) }
+    val dragShift by animateFloatAsState(if (dragId != null) dragAccum else 0f, label = "dragShift")
     val currentOrdered by rememberUpdatedState(state.modules.sortedBy { it.order })
     val rowHeightPx = with(LocalDensity.current) { 54.dp.toPx() }
 
@@ -123,9 +128,9 @@ fun PracticeTab(
                         .clickable { moduleId = m.id }
                         .pointerInput(m.id) {
                             detectDragGesturesAfterLongPress(
-                                onDragStart = { dragAccum = 0f },
-                                onDragEnd = { dragAccum = 0f },
-                                onDragCancel = { dragAccum = 0f },
+                                onDragStart = { dragId = m.id; dragAccum = 0f },
+                                onDragEnd = { dragId = null; dragAccum = 0f },
+                                onDragCancel = { dragId = null; dragAccum = 0f },
                                 onDrag = { change, amount ->
                                     change.consume()
                                     dragAccum += amount.y
@@ -144,6 +149,15 @@ fun PracticeTab(
                             )
                         }
                         .padding(start = 10.dp, end = 4.dp, top = 6.dp, bottom = 6.dp)
+                        .zIndex(if (m.id == dragId) 1f else 0f)
+                        .graphicsLayer {
+                            if (m.id == dragId) {
+                                translationY = dragShift
+                                scaleX = 1.02f
+                                scaleY = 1.02f
+                                shadowElevation = 12f
+                            }
+                        }
                 ) {
                     Box(
                         modifier = Modifier
