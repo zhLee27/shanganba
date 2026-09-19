@@ -75,11 +75,12 @@ fun PracticeTab(
     onModuleChange: (String) -> Unit,
     savedExpanded: Set<String>,
     onExpandedChange: (Set<String>) -> Unit,
+    scrollState: androidx.compose.foundation.ScrollState,
     onStart: (ActiveTimer) -> Unit,
     onOpenHistory: () -> Unit
 ) {
     val c = LocalSgColors.current
-    val scroll = rememberScrollState()
+    val scroll = scrollState
     // 选中与展开状态由上层保存，放弃计时/切页回来还能保持原样
     var moduleId by remember { mutableStateOf(savedModuleId) }
     var expanded by remember { mutableStateOf(savedExpanded) }

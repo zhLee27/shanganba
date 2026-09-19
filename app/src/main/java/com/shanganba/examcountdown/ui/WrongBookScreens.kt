@@ -329,6 +329,7 @@ fun QuestionDetailScreen(
     val module = state.modules.firstOrNull { it.id == q.moduleId }
     val color = moduleColorOf(q.moduleId)
     var cause by remember(q.id) { mutableStateOf(q.errorCause) }
+    var showFullImage by remember(q.id) { mutableStateOf(false) }
     var tip by remember(q.id) { mutableStateOf(q.tipText) }
     var stem by remember(q.id) { mutableStateOf(q.stemText) }
     var correct by remember(q.id) { mutableStateOf(q.correctAnswer) }
@@ -351,6 +352,7 @@ fun QuestionDetailScreen(
                         .height(230.dp)
                         .clip(RoundedCornerShape(24.dp))
                         .background(c.surface2)
+                        .clickable { showFullImage = true }
                 ) {
                     AsyncImage(
                         model = File(q.stemImagePath),
@@ -358,6 +360,16 @@ fun QuestionDetailScreen(
                         contentScale = ContentScale.Fit,
                         modifier = Modifier.fillMaxSize()
                     )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(10.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(c.surface.copy(alpha = 0.85f))
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text("点开放大", style = SgType.meta, color = c.inkMuted)
+                    }
                 }
             }
             SgCard {
@@ -436,6 +448,26 @@ fun QuestionDetailScreen(
                     vm.deleteQuestion(q.id)
                     onBack()
                 }
+            }
+        }
+    }
+
+    // 点图片看大图：点任意位置关闭
+    if (showFullImage && q.stemImagePath.isNotBlank() && File(q.stemImagePath).exists()) {
+        androidx.compose.ui.window.Dialog(onDismissRequest = { showFullImage = false }) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.94f))
+                    .clickable { showFullImage = false },
+                contentAlignment = Alignment.Center
+            ) {
+                AsyncImage(
+                    model = File(q.stemImagePath),
+                    contentDescription = "放大查看题目",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize().padding(8.dp)
+                )
             }
         }
     }

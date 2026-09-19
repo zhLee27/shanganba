@@ -163,6 +163,7 @@ fun AnalysisTab(state: PersistedState) {
                 }
             }
         }
+        } else {
 
         SgCard {
             SgSectionHeader("申论估分", "按各题型得分率")

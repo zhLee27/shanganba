@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -75,8 +76,9 @@ fun SgApp(vm: AppViewModel) {
         ActivityResultContracts.RequestPermission()
     ) { }
 
-    CompositionLocalProvider(LocalIndication provides NoIndication) {
     SgTheme(preset, state.settings.darkMode) {
+        // 注意：必须放在 SgTheme 里面，MaterialTheme 自己会提供带水波纹的 LocalIndication
+        CompositionLocalProvider(LocalIndication provides NoIndication) {
         val c = LocalSgColors.current
         var tab by remember { mutableIntStateOf(0) }
         var overlay by remember { mutableStateOf<Overlay?>(null) }
@@ -90,6 +92,8 @@ fun SgApp(vm: AppViewModel) {
         var practiceSubject by remember { mutableStateOf("XINGCE") }
         var practiceModuleId by remember { mutableStateOf("") }
         var practiceExpanded by remember { mutableStateOf(setOf<String>()) }
+        // 刷题页的滚动位置提到这里，计时结束回来还在原来的地方
+        val practiceScroll = rememberScrollState()
 
         // 手机滑动返回：优先关弹窗 → 关子页面 → 回首页 → 才退出应用
         BackHandler {
@@ -280,6 +284,7 @@ fun SgApp(vm: AppViewModel) {
                                     onModuleChange = { practiceModuleId = it },
                                     savedExpanded = practiceExpanded,
                                     onExpandedChange = { practiceExpanded = it },
+                                    scrollState = practiceScroll,
                                     onStart = { vm.startTimer(it); showResult = false },
                                     onOpenHistory = { overlay = Overlay.HISTORY }
                                 )
