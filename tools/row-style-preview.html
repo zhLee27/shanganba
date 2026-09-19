@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<style>
+  body{margin:0;padding:26px 28px 34px;background:#F3FBF7;font-family:"Microsoft YaHei UI","Microsoft YaHei",sans-serif;color:#2C332F}
+  h1{font-size:16px;margin:0 0 18px;font-weight:600}
+  .wrap{display:flex;gap:20px;flex-wrap:wrap}
+  .col{width:330px;background:#fff;border-radius:20px;padding:14px 14px 18px;box-shadow:0 10px 26px -16px rgba(12,30,22,.5)}
+  .title{font-size:13.5px;font-weight:600;margin-bottom:2px}
+  .desc{font-size:11.5px;color:#7C8A82;margin-bottom:12px;line-height:1.6}
+  .grp{font-size:11px;color:#2E9E77;font-weight:600;margin:8px 0 4px}
+  .row{display:flex;align-items:center;gap:8px;padding:7px 4px;border-radius:12px}
+  .row.sel{background:#F1FBF6}
+  .name{font-size:13.5px}
+  .meta{font-size:11px;color:#7C8A82;margin-left:auto}
+  .dot{width:7px;height:7px;border-radius:50%}
+  .chev{display:flex;align-items:center;justify-content:center;font-size:10px;color:#9BA8A0}
+
+  /* A：轻量圆点 + 小播放按钮 */
+  .A .chev{width:16px;height:16px}
+  .A .play{width:22px;height:22px;border-radius:50%;background:#E8F6EF;display:flex;align-items:center;justify-content:center}
+  .A .play i{width:0;height:0;border-left:7px solid #2E9E77;border-top:4.5px solid transparent;border-bottom:4.5px solid transparent;margin-left:2px;display:block}
+
+  /* B：整行浅卡片 + 中等圆形按钮 */
+  .B .row{background:#F7F9F8;margin-bottom:5px}
+  .B .row.sel{background:#E9F7F0}
+  .B .chev{width:20px;height:20px;border-radius:50%;background:#fff;font-size:11px}
+  .B .play{width:28px;height:28px;border-radius:50%;background:#2E9E77;display:flex;align-items:center;justify-content:center}
+  .B .play i{width:0;height:0;border-left:9px solid #fff;border-top:6px solid transparent;border-bottom:6px solid transparent;margin-left:2px;display:block}
+
+  /* C：极简，无底色，图标最小 */
+  .C .row{padding:6px 2px}
+  .C .chev{width:14px;height:14px;color:#8FB8A6;font-size:11px}
+  .C .play{width:24px;height:24px;border-radius:8px;border:1.5px solid #CFE6DA;display:flex;align-items:center;justify-content:center}
+  .C .play i{width:0;height:0;border-left:7px solid #2E9E77;border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px;display:block}
+</style>
+</head>
+<body>
+<h1>「本次刷什么」行样式 · 三个方向（图标都做小一圈）</h1>
+<div class="wrap">
+
+  <div class="col A">
+    <div class="title">方案 A · 轻量</div>
+    <div class="desc">左边只有一个小箭头，右边小圆底播放按钮（22dp）。最清爽，信息密度高。</div>
+    <div class="grp">行测</div>
+    <div class="row sel">
+      <div class="chev">▸</div><div class="dot" style="background:#2E9E77"></div>
+      <div class="name">言语理解与表达</div><div class="meta">25 题 / 25 分</div>
+      <div class="play"><i></i></div>
+    </div>
+    <div class="row">
+      <div class="chev">▸</div><div class="dot" style="background:#FF9248"></div>
+      <div class="name">数量关系</div><div class="meta">15 题 / 20 分</div>
+      <div class="play"><i></i></div>
+    </div>
+    <div class="row">
+      <div class="chev">▸</div><div class="dot" style="background:#8B7CF6"></div>
+      <div class="name">判断推理</div><div class="meta">35 题 / 32 分</div>
+      <div class="play"><i></i></div>
+    </div>
+    <div class="row">
+      <div class="chev">▸</div><div class="dot" style="background:#2ED3A0"></div>
+      <div class="name">资料分析</div><div class="meta">20 题 / 18 分</div>
+      <div class="play"><i></i></div>
+    </div>
+  </div>
+
+  <div class="col B">
+    <div class="title">方案 B · 卡片</div>
+    <div class="desc">每行浅底卡片，箭头在白色小圆里，播放按钮实心主题色（28dp）。分区清楚、好点。</div>
+    <div class="grp">行测</div>
+    <div class="row sel">
+      <div class="chev">▸</div><div class="dot" style="background:#2E9E77"></div>
+      <div class="name">言语理解与表达</div><div class="meta">25 题 / 25 分</div>
+      <div class="play"><i></i></div>
+    </div>
+    <div class="row">
+      <div class="chev">▸</div><div class="dot" style="background:#FF9248"></div>
+      <div class="name">数量关系</div><div class="meta">15 题 / 20 分</div>
+      <div class="play"><i></i></div>
+    </div>
+    <div class="row">
+      <div class="chev">▸</div><div class="dot" style="background:#8B7CF6"></div>
+      <div class="name">判断推理</div><div class="meta">35 题 / 32 分</div>
+      <div class="play"><i></i></div>
+    </div>
+    <div class="row">
+      <div class="chev">▸</div><div class="dot" style="background:#2ED3A0"></div>
+      <div class="name">资料分析</div><div class="meta">20 题 / 18 分</div>
+      <div class="play"><i></i></div>
+    </div>
+  </div>
+
+  <div class="col C">
+    <div class="title">方案 C · 极简线框</div>
+    <div class="desc">无底色，播放按钮是描边圆角方块（24dp），箭头最细。最不抢视线，但按钮存在感弱。</div>
+    <div class="grp">行测</div>
+    <div class="row sel">
+      <div class="chev">▸</div><div class="dot" style="background:#2E9E77"></div>
+      <div class="name">言语理解与表达</div><div class="meta">25 题 / 25 分</div>
+      <div class="play"><i></i></div>
+    </div>
+    <div class="row">
+      <div class="chev">▸</div><div class="dot" style="background:#FF9248"></div>
+      <div class="name">数量关系</div><div class="meta">15 题 / 20 分</div>
+      <div class="play"><i></i></div>
+    </div>
+    <div class="row">
+      <div class="chev">▸</div><div class="dot" style="background:#8B7CF6"></div>
+      <div class="name">判断推理</div><div class="meta">35 题 / 32 分</div>
+      <div class="play"><i></i></div>
+    </div>
+    <div class="row">
+      <div class="chev">▸</div><div class="dot" style="background:#2ED3A0"></div>
+      <div class="name">资料分析</div><div class="meta">20 题 / 18 分</div>
+      <div class="play"><i></i></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

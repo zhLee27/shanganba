@@ -85,7 +85,6 @@ fun PracticeTab(
     var pendingDeletePreset by remember { mutableStateOf<Int?>(null) }
     var pendingClearPresets by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(setOf<String>()) }
-    var reorderMode by remember { mutableStateOf(false) }
     val listSubject = subject
 
     fun pickModule(m: SubjectModule) {
@@ -113,11 +112,7 @@ fun PracticeTab(
     var editingModule by remember { mutableStateOf<SubjectModule?>(null) }
     var showCustomMinutes by remember { mutableStateOf(false) }
     var presetDeleteMode by remember { mutableStateOf(false) }
-    var dragAccum by remember { mutableFloatStateOf(0f) }
-    var dragId by remember { mutableStateOf<String?>(null) }
-    val dragShift by animateFloatAsState(if (dragId != null) dragAccum else 0f, label = "dragShift")
     val currentOrdered by rememberUpdatedState(state.modules.sortedBy { it.order })
-    val rowHeightPx = with(LocalDensity.current) { 54.dp.toPx() }
 
     val module = state.modules.firstOrNull { it.id == moduleId } ?: state.modules.firstOrNull()
 
@@ -137,19 +132,7 @@ fun PracticeTab(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         SgCard {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    if (reorderMode) "拖动调整顺序" else "本次刷什么",
-                    style = SgType.cardTitle,
-                    color = c.inkTitle,
-                    modifier = Modifier.weight(1f)
-                )
-                if (reorderMode) {
-                    SgPrimaryButton("完成") { reorderMode = false }
-                } else {
-                    SgSoftButton("排序") { reorderMode = true }
-                }
-            }
+            SgSectionHeader("本次刷什么", "点 ▸ 展开小题型，点 ▶ 直接开计时")
             Spacer(Modifier.height(4.dp))
             SgTabRow(
                 tabs = listOf("行测", "申论"),
@@ -178,43 +161,8 @@ fun PracticeTab(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
                         .background(if (picked) color.copy(alpha = 0.14f) else Color.Transparent)
-                        .clickable { moduleId = m.id }
-                        .pointerInput(m.id) {
-                            detectTapGestures(onLongPress = { reorderMode = true })
-                        }
-                        .pointerInput(m.id, reorderMode) {
-                            // 只有进入排序模式才接管拖动，避免影响页面正常滚动
-                            if (reorderMode) detectDragGestures(
-                                onDragStart = { dragId = m.id; dragAccum = 0f },
-                                onDragEnd = { dragId = null; dragAccum = 0f },
-                                onDragCancel = { dragId = null; dragAccum = 0f },
-                                onDrag = { change, amount ->
-                                    change.consume()
-                                    dragAccum += amount.y
-                                    val list = currentOrdered.filter { it.parentId.isEmpty() && it.subject == listSubject }
-                                    val cur = list.indexOfFirst { it.id == m.id }
-                                    if (cur >= 0) {
-                                        if (dragAccum > rowHeightPx * 0.6f && cur < list.lastIndex) {
-                                            vm.moveModuleTo(m.id, cur + 1)
-                                            dragAccum -= rowHeightPx
-                                        } else if (dragAccum < -rowHeightPx * 0.6f && cur > 0) {
-                                            vm.moveModuleTo(m.id, cur - 1)
-                                            dragAccum += rowHeightPx
-                                        }
-                                    }
-                                }
-                            )
-                        }
+                        .clickable { pickModule(m) }
                         .padding(start = 2.dp, end = 2.dp, top = 6.dp, bottom = 6.dp)
-                        .zIndex(if (m.id == dragId) 1f else 0f)
-                        .graphicsLayer {
-                            if (m.id == dragId) {
-                                translationY = dragShift
-                                scaleX = 1.02f
-                                scaleY = 1.02f
-                                shadowElevation = 12f
-                            }
-                        }
                 ) {
                     // 展开小三角：更大更明显，点它才展开小题型
                     val hasChildren = currentOrdered.any { it.parentId == m.id }
@@ -272,8 +220,6 @@ fun PracticeTab(
                         color = c.inkMuted
                     )
                     Spacer(Modifier.width(6.dp))
-                    IconTextButton("✎") { editingModule = m }
-                    IconTextButton("✕", danger = true) { pendingDeleteModule = m }
                     PlayButton(color = color, onClick = { startWith(m) })
                 }
             // 展开后列出小题型，每个都能单独计时
