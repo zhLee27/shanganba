@@ -5,6 +5,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -80,6 +81,7 @@ fun PracticeTab(
     var pendingDeletePreset by remember { mutableStateOf<Int?>(null) }
     var pendingClearPresets by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(setOf<String>()) }
+    var reorderMode by remember { mutableStateOf(false) }
 
     fun pickModule(m: SubjectModule) {
         moduleId = m.id
@@ -130,7 +132,19 @@ fun PracticeTab(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         SgCard {
-            SgSectionHeader("本次刷什么", "长按拖动排序")
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    if (reorderMode) "拖动调整顺序" else "本次刷什么",
+                    style = SgType.cardTitle,
+                    color = c.inkTitle,
+                    modifier = Modifier.weight(1f)
+                )
+                if (reorderMode) {
+                    SgPrimaryButton("完成") { reorderMode = false }
+                } else {
+                    SgSoftButton("排序") { reorderMode = true }
+                }
+            }
             Spacer(Modifier.height(4.dp))
             // 只列大题型；小题型留给任务模板选（三级结构保留）
             val ordered = currentOrdered.filter { it.parentId.isEmpty() }
@@ -155,7 +169,11 @@ fun PracticeTab(
                         .background(if (picked) color.copy(alpha = 0.14f) else Color.Transparent)
                         .clickable { moduleId = m.id }
                         .pointerInput(m.id) {
-                            detectDragGesturesAfterLongPress(
+                            detectTapGestures(onLongPress = { reorderMode = true })
+                        }
+                        .pointerInput(m.id, reorderMode) {
+                            // 只有进入排序模式才接管拖动，避免影响页面正常滚动
+                            if (reorderMode) detectDragGestures(
                                 onDragStart = { dragId = m.id; dragAccum = 0f },
                                 onDragEnd = { dragId = null; dragAccum = 0f },
                                 onDragCancel = { dragId = null; dragAccum = 0f },
@@ -187,6 +205,23 @@ fun PracticeTab(
                             }
                         }
                 ) {
+                    // 展开小三角：点它才展开小题型
+                    Box(
+                        modifier = Modifier
+                            .size(26.dp)
+                            .clip(RoundedCornerShape(9.dp))
+                            .clickable {
+                                expanded = if (expanded.contains(m.id)) expanded - m.id else expanded + m.id
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            if (expanded.contains(m.id)) "▾" else "▸",
+                            style = SgType.chip,
+                            color = if (currentOrdered.any { it.parentId == m.id }) c.accent else c.inkFaint
+                        )
+                    }
+                    Spacer(Modifier.width(2.dp))
                     Box(
                         modifier = Modifier
                             .size(if (picked) 11.dp else 8.dp)
@@ -208,7 +243,50 @@ fun PracticeTab(
                     Spacer(Modifier.width(6.dp))
                     IconTextButton("✎") { editingModule = m }
                     IconTextButton("✕", danger = true) { pendingDeleteModule = m }
+                    Box(
+                        modifier = Modifier
+                            .size(30.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(color.copy(alpha = 0.16f))
+                            .clickable { startWith(m) },
+                        contentAlignment = Alignment.Center
+                    ) { Text("▶", style = SgType.chip, color = color) }
                 }
+            // 展开后列出小题型，每个都能单独计时
+            if (expanded.contains(m.id)) {
+                currentOrdered.filter { it.parentId == m.id }.sortedBy { it.order }.forEach { child ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                if (child.id == moduleId) c.accent.copy(alpha = 0.12f) else Color.Transparent
+                            )
+                            .clickable { pickModule(child) }
+                            .padding(start = 44.dp, end = 4.dp, top = 7.dp, bottom = 7.dp)
+                    ) {
+                        SgDot(c.inkFaint, 7)
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            child.name,
+                            style = SgType.body,
+                            color = if (child.id == moduleId) c.accent else c.ink,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text("${child.defaultQuestionCount} 题", style = SgType.meta, color = c.inkMuted)
+                        Spacer(Modifier.width(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(c.accent.copy(alpha = 0.14f))
+                                .clickable { startWith(child) },
+                            contentAlignment = Alignment.Center
+                        ) { Text("▶", style = SgType.chip, color = c.accent) }
+                    }
+                }
+            }
             }
             Spacer(Modifier.height(4.dp))
             SgDivider()

@@ -19,6 +19,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -94,12 +96,26 @@ fun AnalysisTab(state: PersistedState) {
             .padding(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 行测 / 申论分开看
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SgChip("行测", if (subject == "XINGCE") c.accent else c.inkMuted,
-                modifier = Modifier.clickable { subject = "XINGCE" })
-            SgChip("申论", if (subject == "SHENLUN") c.accent else c.inkMuted,
-                modifier = Modifier.clickable { subject = "SHENLUN" })
+        // 行测 / 申论 两个独立标签页
+        val tabIndex = if (subject == "XINGCE") 0 else 1
+        TabRow(
+            selectedTabIndex = tabIndex,
+            containerColor = Color.Transparent,
+            contentColor = c.accent
+        ) {
+            listOf("行测", "申论").forEachIndexed { i, label ->
+                Tab(
+                    selected = tabIndex == i,
+                    onClick = { subject = if (i == 0) "XINGCE" else "SHENLUN" },
+                    text = {
+                        Text(
+                            label,
+                            style = SgType.cardTitle,
+                            color = if (tabIndex == i) c.accent else c.inkMuted
+                        )
+                    }
+                )
+            }
         }
         if (subject == "XINGCE") {
         SgCard {
