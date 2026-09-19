@@ -106,6 +106,12 @@ object Reminders {
                     "还有 ${state.templates.count { it.enabled }} 项任务在等你，花几分钟把今天的勾掉吧。"
                 )
             }
+        } else {
+            // 关掉总开关时，把之前排好的每日闹钟全部取消（日期与时间设置原样保留，重新打开即恢复）
+            val am = ctx.getSystemService(AlarmManager::class.java)
+            (1..7).forEach { day ->
+                am.cancel(pending(ctx, KIND_DAILY, RC_DAILY + day, "", ""))
+            }
         }
         if (s.nodeReminderOn) {
             state.nodes.filter { it.type == "笔试" || it.type == "报名截止" }.forEach { node ->

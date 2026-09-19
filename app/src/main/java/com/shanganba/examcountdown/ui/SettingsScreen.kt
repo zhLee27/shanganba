@@ -212,7 +212,7 @@ fun SettingsScreen(
                     onCheckedChange = { on -> vm.updateSettings { it.copy(dailyReminderOn = on) } }
                 )
             }
-            if (s.dailyReminderDays.isNotEmpty()) {
+            if (s.dailyReminderOn && s.dailyReminderDays.isNotEmpty()) {
                 Spacer(Modifier.height(2.dp))
                 s.dailyReminderDays.sorted().forEach { day ->
                     Row(

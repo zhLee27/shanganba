@@ -162,6 +162,8 @@ fun PracticeTab(
                 },
                 label = "subject"
             ) { _ ->
+            // AnimatedContent 里必须包一层 Column，否则多个行会被当成叠放层（会互相压住）
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             // 切到没有选中项的科目时自动选中第一个大题型，避免整页都不高亮
             LaunchedEffect(listSubject, ordered.map { it.id }) {
                 val visible = ordered.map { it.id } +
@@ -277,6 +279,7 @@ fun PracticeTab(
                         PlayButton(color = moduleColorOf(child.id), onClick = { startWith(child) }, diameter = 28)
                     }
                 }
+            }
             }
             }
             }

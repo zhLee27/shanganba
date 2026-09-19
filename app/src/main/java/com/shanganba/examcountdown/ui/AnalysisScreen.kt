@@ -114,6 +114,8 @@ fun AnalysisTab(state: PersistedState) {
             },
             label = "subject"
         ) { sub ->
+        // 同样要包 Column，否则几张卡片会叠在一起
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (sub == "XINGCE") {
         SgCard {
             SgSectionHeader("行测模块正确率", if (hasData) "按安徽省考分值加权" else "还没有刷题数据")
@@ -226,6 +228,7 @@ fun AnalysisTab(state: PersistedState) {
                     Text(if (st.questions == 0) "—" else "%.0f%%".format(st.accuracy * 100), style = SgType.meta, color = c.inkMuted)
                 }
             }
+        }
         }
         }
         }
