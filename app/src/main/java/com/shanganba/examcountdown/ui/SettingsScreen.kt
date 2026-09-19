@@ -196,6 +196,21 @@ fun SettingsScreen(
                         "当天任务没全部完成才提醒 · ${formatMinute(s.dailyReminderMinute)}",
                         style = SgType.meta, color = c.inkMuted
                     )
+                    Spacer(Modifier.height(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        listOf("一", "二", "三", "四", "五", "六", "日").forEachIndexed { i, label ->
+                            val day = i + 1
+                            val on = s.dailyReminderDays.contains(day)
+                            SgChip(
+                                label,
+                                if (on) c.accent else c.inkFaint,
+                                modifier = Modifier.clickable {
+                                    val next = if (on) s.dailyReminderDays - day else s.dailyReminderDays + day
+                                    vm.updateSettings { it.copy(dailyReminderDays = next.sorted()) }
+                                }
+                            )
+                        }
+                    }
                 }
                 SgSoftButton("改时间") { editDailyTime = true }
                 Spacer(Modifier.width(8.dp))

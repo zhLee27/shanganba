@@ -77,15 +77,19 @@ object Reminders {
         }
     }
 
-    private fun nextOccurrence(minuteOfDay: Int, plusDays: Long = 0): Long {
+    /** 按选中的星期（1=周一…7=周日）找下一次触发时间 */
+    private fun nextOccurrence(minuteOfDay: Int, days: List<Int>): Long {
         val zone = ZoneId.systemDefault()
-        var date = LocalDate.now().plusDays(plusDays)
-        var dt = LocalDateTime.of(date, java.time.LocalTime.of(minuteOfDay / 60, minuteOfDay % 60))
-        if (plusDays == 0L && dt.atZone(zone).toInstant().toEpochMilli() <= System.currentTimeMillis()) {
-            date = date.plusDays(1)
-            dt = LocalDateTime.of(date, java.time.LocalTime.of(minuteOfDay / 60, minuteOfDay % 60))
+        val time = java.time.LocalTime.of(minuteOfDay / 60, minuteOfDay % 60)
+        val wanted = if (days.isEmpty()) listOf(1, 2, 3, 4, 5, 6, 7) else days
+        var date = LocalDate.now()
+        for (i in 0..14) {
+            val d = date.plusDays(i.toLong())
+            if (d.dayOfWeek.value !in wanted) continue
+            val at = LocalDateTime.of(d, time).atZone(zone).toInstant().toEpochMilli()
+            if (at > System.currentTimeMillis()) return at
         }
-        return dt.atZone(zone).toInstant().toEpochMilli()
+        return LocalDateTime.of(date.plusDays(1), time).atZone(zone).toInstant().toEpochMilli()
     }
 
     /** 根据当前设置重新排定所有提醒 */
@@ -94,7 +98,7 @@ object Reminders {
         val s = state.settings
         if (s.dailyReminderOn) {
             scheduleAt(
-                ctx, nextOccurrence(s.dailyReminderMinute), KIND_DAILY, RC_DAILY,
+                ctx, nextOccurrence(s.dailyReminderMinute, s.dailyReminderDays), KIND_DAILY, RC_DAILY,
                 "今天的计划还没完成",
                 "还有 ${state.templates.count { it.enabled }} 项任务在等你，花几分钟把今天的勾掉吧。"
             )

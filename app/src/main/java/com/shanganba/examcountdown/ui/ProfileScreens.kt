@@ -113,6 +113,17 @@ fun LoginScreen(vm: AppViewModel, state: PersistedState, onBack: () -> Unit) {
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf("") }
     val firstTime = state.profile.account.isBlank()
+    val phoneError = when {
+        account.isBlank() -> ""
+        !Regex("^1\\d{10}$").matches(account) -> "手机号要是 11 位数字，且以 1 开头"
+        else -> ""
+    }
+    val pwdError = when {
+        password.isBlank() -> ""
+        password.length < 6 -> "密码至少 6 位"
+        password.none { it.isLowerCase() } || password.none { it.isDigit() } -> "密码要同时包含小写字母和数字"
+        else -> ""
+    }
 
     Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
         Spacer(Modifier.height(8.dp))
@@ -149,6 +160,10 @@ fun LoginScreen(vm: AppViewModel, state: PersistedState, onBack: () -> Unit) {
                 label = "手机号（11 位）",
                 keyboardType = KeyboardType.Phone
             )
+            if (phoneError.isNotBlank()) {
+                Spacer(Modifier.height(4.dp))
+                Text(phoneError, style = SgType.meta, color = c.accent2)
+            }
             Spacer(Modifier.height(10.dp))
             SgTextField(
                 value = password,
@@ -156,6 +171,10 @@ fun LoginScreen(vm: AppViewModel, state: PersistedState, onBack: () -> Unit) {
                 label = "密码（至少 6 位，含小写字母和数字）",
                 password = true
             )
+            if (pwdError.isNotBlank()) {
+                Spacer(Modifier.height(4.dp))
+                Text(pwdError, style = SgType.meta, color = c.accent2)
+            }
             if (error.isNotBlank()) {
                 Spacer(Modifier.height(8.dp))
                 Text(error, style = SgType.meta, color = c.accent2)

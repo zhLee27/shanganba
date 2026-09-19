@@ -94,13 +94,22 @@ data class TaskTemplate(
 data class ExtraTask(val id: String, val title: String)
 
 @Serializable
+data class ProfileData(
+    val nickname: String = "上岸吧用户",
+    val signature: String = "",
+    val avatarPath: String = ""
+)
+
+@Serializable
 data class Profile(
     val account: String = "",
     val passwordHash: String = "",
     val nickname: String = "上岸吧用户",
     val signature: String = "",
     val avatarPath: String = "",
-    val loggedIn: Boolean = false
+    val loggedIn: Boolean = false,
+    /** 账号 → 资料，保证头像、昵称、签名跟着账号走 */
+    val accounts: Map<String, ProfileData> = emptyMap()
 )
 
 @Serializable
@@ -152,6 +161,8 @@ data class Settings(
     val targetScore: Double = 135.0,
     val dailyReminderOn: Boolean = true,
     val dailyReminderMinute: Int = 20 * 60,
+    /** 每周哪几天提醒：1=周一 … 7=周日 */
+    val dailyReminderDays: List<Int> = listOf(1, 2, 3, 4, 5, 6, 7),
     val nodeReminderOn: Boolean = true,
     val nodeReminderMinute: Int = 9 * 60,
     val autoCheckUpdate: Boolean = true,

@@ -12,6 +12,7 @@ import com.shanganba.examcountdown.data.KnowledgeNode
 import com.shanganba.examcountdown.data.PersistedState
 import com.shanganba.examcountdown.data.PracticeSession
 import com.shanganba.examcountdown.data.Profile
+import com.shanganba.examcountdown.data.ProfileData
 import com.shanganba.examcountdown.data.QuestionRecord
 import com.shanganba.examcountdown.data.SubjectModule
 import com.shanganba.examcountdown.data.Settings
@@ -174,11 +175,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         return when {
             current.account.isBlank() -> {
                 mutate { s ->
+                    val saved = s.profile.accounts[acc]
                     s.copy(
                         profile = s.profile.copy(
                             account = acc,
                             passwordHash = hash,
-                            nickname = if (s.profile.nickname == "上岸吧用户") acc else s.profile.nickname,
+                            nickname = saved?.nickname ?: acc,
+                            signature = saved?.signature ?: "",
+                            avatarPath = saved?.avatarPath ?: "",
                             loggedIn = true
                         )
                     )
@@ -188,7 +192,17 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             current.account != acc -> "本机已注册账号「${current.account}」，要先注销才能换账号"
             current.passwordHash != hash -> "密码不对"
             else -> {
-                mutate { s -> s.copy(profile = s.profile.copy(loggedIn = true)) }
+                mutate { s ->
+                    val saved = s.profile.accounts[acc]
+                    s.copy(
+                        profile = s.profile.copy(
+                            loggedIn = true,
+                            nickname = saved?.nickname ?: s.profile.nickname,
+                            signature = saved?.signature ?: s.profile.signature,
+                            avatarPath = saved?.avatarPath ?: s.profile.avatarPath
+                        )
+                    )
+                }
                 null
             }
         }
@@ -197,7 +211,12 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun logout() = mutate { s -> s.copy(profile = s.profile.copy(loggedIn = false)) }
 
     fun updateProfile(block: (Profile) -> Profile) = mutate { s ->
-        s.copy(profile = block(s.profile))
+        val next = block(s.profile)
+        val saved = ProfileData(next.nickname, next.signature, next.avatarPath)
+        s.copy(
+            profile = if (next.account.isBlank()) next
+            else next.copy(accounts = next.accounts + (next.account to saved))
+        )
     }
 
     fun updateTimerPresets(presets: List<Int>) = mutate { s ->

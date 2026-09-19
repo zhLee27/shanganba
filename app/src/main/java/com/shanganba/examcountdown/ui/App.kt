@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -70,6 +71,7 @@ fun SgApp(vm: AppViewModel) {
         var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
         var updateManifest by remember { mutableStateOf<UpdateManifest?>(null) }
         var confirmQuitTimer by remember { mutableStateOf(false) }
+        var loginPrompt by remember { mutableStateOf(false) }
 
         // 手机滑动返回：优先关弹窗 → 关子页面 → 回首页 → 才退出应用
         BackHandler {
@@ -117,6 +119,7 @@ fun SgApp(vm: AppViewModel) {
         LaunchedEffect(
             state.settings.dailyReminderOn,
             state.settings.dailyReminderMinute,
+            state.settings.dailyReminderDays,
             state.settings.nodeReminderOn,
             state.settings.nodeReminderMinute,
             state.nodes
@@ -285,6 +288,41 @@ fun SgApp(vm: AppViewModel) {
             UpdateAvailableDialog(manifest) {
                 updateManifest = null
             }
+        }
+
+        // 未登录：只能浏览，点任何功能都提示登录（「我的」页除外，那里有登录入口）
+        val loggedIn = state.profile.loggedIn
+        if (!loggedIn && overlay == null && tab != 4) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(
+                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                        indication = null
+                    ) { loginPrompt = true }
+            )
+        }
+        if (loginPrompt) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { loginPrompt = false },
+                title = { Text("需要登录", style = SgType.cardTitle) },
+                text = {
+                    Text(
+                        "登录后才能使用功能，现在只能浏览页面。要现在去登录吗？",
+                        style = SgType.bodyLong,
+                        color = c.inkMuted
+                    )
+                },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = {
+                        loginPrompt = false
+                        overlay = Overlay.LOGIN
+                    }) { Text("去登录") }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = { loginPrompt = false }) { Text("先看看") }
+                }
+            )
         }
     }
 }
