@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -383,6 +384,7 @@ private fun TaskRow(
             title,
             style = SgType.body,
             color = if (done) c.inkMuted else c.ink,
+            textDecoration = if (done) TextDecoration.LineThrough else null,
             modifier = Modifier.weight(1f)
         )
         if (note.isNotEmpty()) {
