@@ -35,6 +35,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -454,11 +457,14 @@ fun QuestionDetailScreen(
 
     // 点图片看大图：点任意位置关闭
     if (showFullImage && q.stemImagePath.isNotBlank() && File(q.stemImagePath).exists()) {
+        var scale by remember { mutableStateOf(1f) }
+        var offsetX by remember { mutableStateOf(0f) }
+        var offsetY by remember { mutableStateOf(0f) }
         androidx.compose.ui.window.Dialog(onDismissRequest = { showFullImage = false }) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.94f))
+                    .background(c.bg)
                     .clickable { showFullImage = false },
                 contentAlignment = Alignment.Center
             ) {
@@ -466,7 +472,41 @@ fun QuestionDetailScreen(
                     model = File(q.stemImagePath),
                     contentDescription = "放大查看题目",
                     contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize().padding(8.dp)
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(6.dp)
+                        .graphicsLayer(
+                            scaleX = scale,
+                            scaleY = scale,
+                            translationX = offsetX,
+                            translationY = offsetY
+                        )
+                        .pointerInput(q.stemImagePath) {
+                            detectTransformGestures { _, pan, zoom, _ ->
+                                scale = (scale * zoom).coerceIn(1f, 6f)
+                                offsetX += pan.x
+                                offsetY += pan.y
+                            }
+                        }
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(14.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(c.surface)
+                        .clickable { showFullImage = false }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text("关闭", style = SgType.meta, color = c.inkMuted)
+                }
+                Text(
+                    "双指放大 · 拖动查看 · 点关闭返回",
+                    style = SgType.meta,
+                    color = c.inkFaint,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 22.dp)
                 )
             }
         }

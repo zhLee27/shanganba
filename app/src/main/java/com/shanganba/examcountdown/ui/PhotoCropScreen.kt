@@ -2,6 +2,8 @@ package com.shanganba.examcountdown.ui
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import androidx.exifinterface.media.ExifInterface
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -48,7 +50,23 @@ private fun loadScaled(path: String, maxEdge: Int): Bitmap? = try {
     BitmapFactory.decodeFile(path, bounds)
     var sample = 1
     while (bounds.outWidth / sample > maxEdge || bounds.outHeight / sample > maxEdge) sample *= 2
-    BitmapFactory.decodeFile(path, BitmapFactory.Options().apply { inSampleSize = sample })
+    val decoded = BitmapFactory.decodeFile(path, BitmapFactory.Options().apply { inSampleSize = sample })
+    // 依据照片的 EXIF 方向自动摆正，横拍竖拍都不会躺倒
+    val orientation = try {
+        ExifInterface(path).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+    } catch (e: Exception) {
+        ExifInterface.ORIENTATION_NORMAL
+    }
+    val degrees = when (orientation) {
+        ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+        ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+        ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+        else -> 0f
+    }
+    if (degrees == 0f) decoded else Bitmap.createBitmap(
+        decoded, 0, 0, decoded.width, decoded.height,
+        Matrix().apply { postRotate(degrees) }, true
+    )
 } catch (e: Exception) {
     null
 }
@@ -70,7 +88,7 @@ private fun displayRect(bmp: Bitmap, viewport: Size): Rect {
 fun PhotoCropScreen(sourcePath: String, onCancel: () -> Unit, onDone: (String) -> Unit) {
     val c = LocalSgColors.current
     val ctx = LocalContext.current
-    val bitmap = remember(sourcePath) { loadScaled(sourcePath, 1600) }
+    var bitmap by remember(sourcePath) { mutableStateOf(loadScaled(sourcePath, 1600)) }
     val image = remember(bitmap) { bitmap?.asImageBitmap() }
     var viewport by remember { mutableStateOf(Size.Zero) }
     var frame by remember { mutableStateOf<Rect?>(null) }
@@ -94,7 +112,7 @@ fun PhotoCropScreen(sourcePath: String, onCancel: () -> Unit, onDone: (String) -
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1f)
+                .weight(1f)
                 .clip(RoundedCornerShape(20.dp))
                 .background(Color.Black)
                 .onSizeChanged { size ->
@@ -177,6 +195,18 @@ fun PhotoCropScreen(sourcePath: String, onCancel: () -> Unit, onDone: (String) -
         Spacer(Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             SgSoftButton("取消", modifier = Modifier.weight(1f)) { onCancel() }
+            SgSoftButton("旋转", modifier = Modifier.weight(1f)) {
+                val cur = bitmap ?: return@SgSoftButton
+                val rotated = Bitmap.createBitmap(
+                    cur, 0, 0, cur.width, cur.height,
+                    Matrix().apply { postRotate(90f) }, true
+                )
+                cur.recycle()
+                bitmap = rotated
+                // 旋转后图片比例变了，重新摆一个裁剪框
+                frame = null
+                initFrame(viewport, rotated)
+            }
             SgWideButton("用这块", modifier = Modifier.weight(1f)) {
                 val bmp = bitmap ?: return@SgWideButton
                 val f = frame ?: return@SgWideButton

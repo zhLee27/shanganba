@@ -20,8 +20,8 @@ android {
         applicationId = "com.shanganba.examcountdown"
         minSdk = 26
         targetSdk = 35
-        versionCode = 24
-        versionName = "2.6.0"
+        versionCode = 25
+        versionName = "2.7.0"
         resourceConfigurations += listOf("zh-rCN", "en")
     }
 
@@ -87,9 +87,11 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("androidx.glance:glance-appwidget:1.1.1")
     implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
     debugImplementation("androidx.compose.ui:ui-tooling")
     testImplementation("junit:junit:4.13.2")
 }
+
 
 
 
