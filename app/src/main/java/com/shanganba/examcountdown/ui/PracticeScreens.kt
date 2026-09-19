@@ -71,12 +71,20 @@ fun PracticeTab(
     state: PersistedState,
     subject: String,
     onSubjectChange: (String) -> Unit,
+    savedModuleId: String,
+    onModuleChange: (String) -> Unit,
+    savedExpanded: Set<String>,
+    onExpandedChange: (Set<String>) -> Unit,
     onStart: (ActiveTimer) -> Unit,
     onOpenHistory: () -> Unit
 ) {
     val c = LocalSgColors.current
     val scroll = rememberScrollState()
-    var moduleId by remember { mutableStateOf(state.modules.firstOrNull()?.id ?: "") }
+    // 选中与展开状态由上层保存，放弃计时/切页回来还能保持原样
+    var moduleId by remember { mutableStateOf(savedModuleId) }
+    var expanded by remember { mutableStateOf(savedExpanded) }
+    LaunchedEffect(moduleId) { onModuleChange(moduleId) }
+    LaunchedEffect(expanded) { onExpandedChange(expanded) }
     var questionCount by remember { mutableIntStateOf(20) }
     var countDown by remember { mutableStateOf(true) }
     var minutes by remember { mutableIntStateOf(25) }
@@ -84,7 +92,6 @@ fun PracticeTab(
     var pendingDeleteModule by remember { mutableStateOf<SubjectModule?>(null) }
     var pendingDeletePreset by remember { mutableStateOf<Int?>(null) }
     var pendingClearPresets by remember { mutableStateOf(false) }
-    var expanded by remember { mutableStateOf(setOf<String>()) }
     val listSubject = subject
 
     fun pickModule(m: SubjectModule) {
@@ -142,6 +149,14 @@ fun PracticeTab(
             Spacer(Modifier.height(6.dp))
             // 只列当前科目的大题型；小题型点前面的小三角展开
             val ordered = currentOrdered.filter { it.parentId.isEmpty() && it.subject == listSubject }
+            // 切到没有选中项的科目时自动选中第一个大题型，避免整页都不高亮
+            LaunchedEffect(listSubject, ordered.map { it.id }) {
+                val visible = ordered.map { it.id } +
+                    ordered.flatMap { p -> currentOrdered.filter { it.parentId == p.id }.map { it.id } }
+                if (moduleId.isBlank() || moduleId !in visible) {
+                    ordered.firstOrNull()?.let { pickModule(it) }
+                }
+            }
             var lastSubject = ""
             ordered.forEachIndexed { index, m ->
                 if (m.subject != lastSubject) {
@@ -160,9 +175,12 @@ fun PracticeTab(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(if (picked) color.copy(alpha = 0.16f) else c.surface2)
+                        // 未选中用中性浅灰，选中才上该题型的颜色（不要再整片绿）
+                        .background(
+                            if (picked) color.copy(alpha = 0.13f) else c.ink.copy(alpha = 0.035f)
+                        )
                         .clickable { pickModule(m) }
-                        .padding(start = 6.dp, end = 6.dp, top = 9.dp, bottom = 9.dp)
+                        .padding(start = 10.dp, end = 8.dp, top = 13.dp, bottom = 13.dp)
                 ) {
                     // 左侧展开箭头：只用线条箭头，不加圆底（方案 B）
                     val hasChildren = currentOrdered.any { it.parentId == m.id }
@@ -228,7 +246,7 @@ fun PracticeTab(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .background(
-                                if (child.id == moduleId) c.accent.copy(alpha = 0.12f) else Color.Transparent
+                                if (child.id == moduleId) moduleColorOf(child.id).copy(alpha = 0.16f) else Color.Transparent
                             )
                             .clickable { pickModule(child) }
                             .padding(start = 44.dp, end = 4.dp, top = 7.dp, bottom = 7.dp)
@@ -238,7 +256,7 @@ fun PracticeTab(
                         Text(
                             child.name,
                             style = SgType.body,
-                            color = if (child.id == moduleId) c.accent else c.ink,
+                            color = if (child.id == moduleId) moduleColorOf(child.id) else c.ink,
                             modifier = Modifier.weight(1f)
                         )
                         Text("${child.defaultQuestionCount} 题", style = SgType.meta, color = c.inkMuted)

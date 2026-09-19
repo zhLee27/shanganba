@@ -7,6 +7,9 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Indication
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +26,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -52,6 +56,15 @@ private enum class Tab(val emoji: String, val label: String) {
 
 private enum class Overlay { NODES, TASKS, KNOWLEDGE, HISTORY, CHECKIN, QUESTION, LOGIN, PROFILE_EDIT }
 
+/** 关掉点击时的半透明水波纹：这个 App 里所有点击反馈都靠颜色变化，不要那层灰 */
+private object NoIndication : androidx.compose.foundation.IndicationNodeFactory {
+    override fun create(interactionSource: InteractionSource): androidx.compose.ui.node.DelegatableNode =
+        object : androidx.compose.ui.Modifier.Node() { }
+
+    override fun equals(other: Any?): Boolean = other === this
+    override fun hashCode(): Int = -1
+}
+
 @Composable
 fun SgApp(vm: AppViewModel) {
     val state by vm.state.collectAsState()
@@ -62,6 +75,7 @@ fun SgApp(vm: AppViewModel) {
         ActivityResultContracts.RequestPermission()
     ) { }
 
+    CompositionLocalProvider(LocalIndication provides NoIndication) {
     SgTheme(preset, state.settings.darkMode) {
         val c = LocalSgColors.current
         var tab by remember { mutableIntStateOf(0) }
@@ -74,6 +88,8 @@ fun SgApp(vm: AppViewModel) {
         var loginPrompt by remember { mutableStateOf(false) }
         // 刷题页的行测/申论切换放在这里，计时结束后回来仍在原来那一页
         var practiceSubject by remember { mutableStateOf("XINGCE") }
+        var practiceModuleId by remember { mutableStateOf("") }
+        var practiceExpanded by remember { mutableStateOf(setOf<String>()) }
 
         // 手机滑动返回：优先关弹窗 → 关子页面 → 回首页 → 才退出应用
         BackHandler {
@@ -260,6 +276,10 @@ fun SgApp(vm: AppViewModel) {
                                     state = state,
                                     subject = practiceSubject,
                                     onSubjectChange = { practiceSubject = it },
+                                    savedModuleId = practiceModuleId,
+                                    onModuleChange = { practiceModuleId = it },
+                                    savedExpanded = practiceExpanded,
+                                    onExpandedChange = { practiceExpanded = it },
                                     onStart = { vm.startTimer(it); showResult = false },
                                     onOpenHistory = { overlay = Overlay.HISTORY }
                                 )
@@ -328,5 +348,6 @@ fun SgApp(vm: AppViewModel) {
                 }
             )
         }
+    }
     }
 }

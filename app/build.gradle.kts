@@ -20,8 +20,8 @@ android {
         applicationId = "com.shanganba.examcountdown"
         minSdk = 26
         targetSdk = 35
-        versionCode = 19
-        versionName = "2.3.0"
+        versionCode = 21
+        versionName = "2.4.1"
         resourceConfigurations += listOf("zh-rCN", "en")
     }
 
@@ -90,6 +90,8 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     testImplementation("junit:junit:4.13.2")
 }
+
+
 
 
 

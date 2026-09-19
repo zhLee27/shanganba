@@ -24,6 +24,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -321,19 +322,25 @@ fun SgTabRow(
     ) {
         tabs.forEachIndexed { i, label ->
             val on = i == selectedIndex
+            val bg by androidx.compose.animation.animateColorAsState(
+                if (on) c.accent else Color.Transparent, label = "tabBg"
+            )
+            val fg by androidx.compose.animation.animateColorAsState(
+                if (on) c.onAccent else c.inkMuted, label = "tabFg"
+            )
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .height(38.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(if (on) c.accent else Color.Transparent)
+                    .background(bg)
                     .clickable { onSelect(i) },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     label,
                     style = SgType.button,
-                    color = if (on) c.onAccent else c.inkMuted
+                    color = fg
                 )
             }
         }
