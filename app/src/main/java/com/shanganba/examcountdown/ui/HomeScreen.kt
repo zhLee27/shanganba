@@ -54,6 +54,7 @@ fun HomeScreen(
     val donePct = if (totalTasks == 0) 0 else (doneTasks * 100 / totalTasks)
 
     var showAddTask by remember { mutableStateOf(false) }
+    var pendingDeleteExtra by remember { mutableStateOf<com.shanganba.examcountdown.data.ExtraTask?>(null) }
 
     Column(
         modifier = Modifier
@@ -64,37 +65,40 @@ fun HomeScreen(
     ) {
         HeroCard(state, now, day)
 
-        SgCard {
-            SgSectionHeader("今日任务", "$doneTasks / $totalTasks · 完成 $donePct%")
-            Spacer(Modifier.height(2.dp))
-            var lastSubject = ""
-            state.templates.filter { it.enabled }.sortedBy { it.order }.forEachIndexed { index, t ->
-                val subject = state.modules.firstOrNull { it.id == t.moduleId }?.subject ?: "XINGCE"
-                if (subject != lastSubject) {
-                    lastSubject = subject
-                    Text(
-                        if (subject == "SHENLUN") "申论" else "行测",
-                        style = SgType.chip,
-                        color = c.accent,
-                        modifier = Modifier.padding(top = 6.dp)
-                    )
+        // 行测、申论各占一张卡，不混排
+        listOf("XINGCE" to "行测任务", "SHENLUN" to "申论任务").forEach { (subject, label) ->
+            val items = state.templates
+                .filter { it.enabled && (state.modules.firstOrNull { m -> m.id == it.moduleId }?.subject ?: "XINGCE") == subject }
+                .sortedBy { it.order }
+            val extras = if (subject == "XINGCE") day.extraTasks else emptyList()
+            if (items.isEmpty() && extras.isEmpty()) return@forEach
+            val doneCount = items.count { day.doneTemplateIds.contains(it.id) } +
+                extras.count { day.doneExtraIds.contains(it.id) }
+            val all = items.size + extras.size
+            SgCard {
+                SgSectionHeader(label, "$doneCount / $all")
+                Spacer(Modifier.height(2.dp))
+                items.forEach { t ->
+                    TaskRow(
+                        title = t.title,
+                        note = if (t.targetAmount > 0) "${t.targetAmount} ${t.unit}" else "",
+                        color = moduleColorOf(t.moduleId),
+                        done = day.doneTemplateIds.contains(t.id)
+                    ) { vm.toggleTemplate(t.id) }
                 }
-                TaskRow(
-                    title = t.title,
-                    note = if (t.targetAmount > 0) "${t.targetAmount} ${t.unit}" else "",
-                    color = moduleColorOf(t.moduleId, index),
-                    done = day.doneTemplateIds.contains(t.id)
-                ) { vm.toggleTemplate(t.id) }
+                extras.forEach { extra ->
+                    TaskRow(
+                        title = extra.title,
+                        note = "临时",
+                        color = c.accent2,
+                        done = day.doneExtraIds.contains(extra.id),
+                        onLongClick = { pendingDeleteExtra = extra }
+                    ) { vm.toggleExtraTask(extra.id) }
+                }
             }
-            day.extraTasks.forEach { extra ->
-                TaskRow(
-                    title = extra.title,
-                    note = "临时",
-                    color = c.accent2,
-                    done = day.doneExtraIds.contains(extra.id),
-                    onLongClick = { vm.removeExtraTask(extra.id) }
-                ) { vm.toggleExtraTask(extra.id) }
-            }
+        }
+
+        SgCard {
             Spacer(Modifier.height(4.dp))
             SgDivider()
             Spacer(Modifier.height(8.dp))
@@ -164,6 +168,15 @@ fun HomeScreen(
             dismissButton = {
                 TextButton(onClick = { showAddTask = false }) { Text("取消") }
             }
+        )
+    }
+
+    pendingDeleteExtra?.let { extra ->
+        SgConfirmDialog(
+            title = "删除临时任务",
+            message = "确定删掉「${extra.title}」吗？",
+            onConfirm = { vm.removeExtraTask(extra.id) },
+            onDismiss = { pendingDeleteExtra = null }
         )
     }
 }

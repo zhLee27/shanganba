@@ -29,6 +29,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.shanganba.examcountdown.data.PersistedState
@@ -112,7 +115,26 @@ fun LoginScreen(vm: AppViewModel, state: PersistedState, onBack: () -> Unit) {
     val firstTime = state.profile.account.isBlank()
 
     Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
-        SgScreenTitle("登录 / 注册", right = { SgSoftButton("返回") { onBack() } })
+        Spacer(Modifier.height(8.dp))
+        // 欢迎头
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(26.dp))
+                .background(Brush.linearGradient(listOf(c.heroStart, c.heroEnd)))
+                .padding(horizontal = 20.dp, vertical = 22.dp)
+        ) {
+            Column {
+                Text("上岸吧", style = SgType.pageTitle, color = c.heroInk)
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "每天坐得住，考场上就稳得住",
+                    style = SgType.meta,
+                    color = c.heroInk.copy(alpha = 0.92f)
+                )
+            }
+        }
+        Spacer(Modifier.height(16.dp))
         SgCard {
             Text(
                 if (firstTime) "第一次使用：填好账号和密码点登录，就等于在本机注册好了。账号密码只保存在这台手机上，不会上传。"
@@ -121,12 +143,17 @@ fun LoginScreen(vm: AppViewModel, state: PersistedState, onBack: () -> Unit) {
                 color = c.inkMuted
             )
             Spacer(Modifier.height(14.dp))
-            SgTextField(value = account, onValueChange = { account = it }, label = "账号（至少 2 个字符）")
+            SgTextField(
+                value = account,
+                onValueChange = { account = it.filter { ch -> ch.isDigit() }.take(11) },
+                label = "手机号（11 位）",
+                keyboardType = KeyboardType.Phone
+            )
             Spacer(Modifier.height(10.dp))
             SgTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = "密码（至少 4 位）",
+                label = "密码（至少 6 位，含小写字母和数字）",
                 password = true
             )
             if (error.isNotBlank()) {
@@ -138,7 +165,15 @@ fun LoginScreen(vm: AppViewModel, state: PersistedState, onBack: () -> Unit) {
                 val err = vm.loginOrRegister(account, password)
                 if (err == null) onBack() else error = err
             }
+            Spacer(Modifier.height(10.dp))
+            Text(
+                "账号密码只保存在这台手机上，不会上传到任何服务器；换手机时用「数据 → 导出 JSON」搬过去。",
+                style = SgType.meta,
+                color = c.inkFaint
+            )
         }
+        Spacer(Modifier.height(12.dp))
+        SgSoftButton("返回") { onBack() }
     }
 }
 

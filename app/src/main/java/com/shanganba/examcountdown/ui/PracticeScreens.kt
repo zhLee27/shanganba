@@ -76,6 +76,8 @@ fun PracticeTab(
     var countDown by remember { mutableStateOf(true) }
     var minutes by remember { mutableIntStateOf(25) }
     var showNewModule by remember { mutableStateOf(false) }
+    var pendingDeleteModule by remember { mutableStateOf<SubjectModule?>(null) }
+    var pendingDeletePreset by remember { mutableStateOf<Int?>(null) }
     var editingModule by remember { mutableStateOf<SubjectModule?>(null) }
     var showCustomMinutes by remember { mutableStateOf(false) }
     var presetDeleteMode by remember { mutableStateOf(false) }
@@ -105,7 +107,8 @@ fun PracticeTab(
         SgCard {
             SgSectionHeader("本次刷什么", "长按拖动排序")
             Spacer(Modifier.height(4.dp))
-            val ordered = currentOrdered
+            // 只列大题型；小题型留给任务模板选（三级结构保留）
+            val ordered = currentOrdered.filter { it.parentId.isEmpty() }
             var lastSubject = ""
             ordered.forEachIndexed { index, m ->
                 if (m.subject != lastSubject) {
@@ -134,7 +137,7 @@ fun PracticeTab(
                                 onDrag = { change, amount ->
                                     change.consume()
                                     dragAccum += amount.y
-                                    val list = currentOrdered
+                                    val list = currentOrdered.filter { it.parentId.isEmpty() }
                                     val cur = list.indexOfFirst { it.id == m.id }
                                     if (cur >= 0) {
                                         if (dragAccum > rowHeightPx * 0.6f && cur < list.lastIndex) {
@@ -179,10 +182,7 @@ fun PracticeTab(
                     )
                     Spacer(Modifier.width(6.dp))
                     IconTextButton("✎") { editingModule = m }
-                    IconTextButton("✕", danger = true) {
-                        vm.deleteModule(m.id)
-                        if (moduleId == m.id) moduleId = ""
-                    }
+                    IconTextButton("✕", danger = true) { pendingDeleteModule = m }
                 }
             }
             Spacer(Modifier.height(4.dp))
@@ -257,9 +257,7 @@ fun PracticeTab(
                         SgChip(
                             "$m 分 ✕",
                             c.accent2,
-                            modifier = Modifier.clickable {
-                                vm.updateTimerPresets(state.settings.timerPresets - m)
-                            }
+                            modifier = Modifier.clickable { pendingDeletePreset = m }
                         )
                     } else {
                         SgChip(
@@ -351,7 +349,28 @@ fun PracticeTab(
             initial = editingModule,
             onDismiss = { editingModule = null },
             onSave = { m -> vm.upsertModule(m); editingModule = null },
-            onDelete = { m -> vm.deleteModule(m.id); editingModule = null }
+            onDelete = { m -> pendingDeleteModule = m; editingModule = null }
+        )
+    }
+
+    pendingDeleteModule?.let { m ->
+        SgConfirmDialog(
+            title = "删除模块",
+            message = "确定删除「${m.name}」吗？已有的刷题记录会保留，只是不再出现在列表里。",
+            onConfirm = {
+                vm.deleteModule(m.id)
+                if (moduleId == m.id) moduleId = ""
+            },
+            onDismiss = { pendingDeleteModule = null }
+        )
+    }
+
+    pendingDeletePreset?.let { m ->
+        SgConfirmDialog(
+            title = "删除预设时长",
+            message = "确定删掉「$m 分」这个预设吗？",
+            onConfirm = { vm.updateTimerPresets(state.settings.timerPresets - m) },
+            onDismiss = { pendingDeletePreset = null }
         )
     }
 

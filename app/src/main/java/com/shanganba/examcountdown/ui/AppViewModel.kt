@@ -165,8 +165,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     /** 返回 null 表示成功，否则是错误提示 */
     fun loginOrRegister(account: String, password: String): String? {
         val acc = account.trim()
-        if (acc.length < 2) return "账号至少 2 个字符"
-        if (password.length < 4) return "密码至少 4 位"
+        if (!Regex("^1\\d{10}$").matches(acc)) return "请输入 11 位手机号"
+        if (password.length < 6 || password.none { it.isLowerCase() } || password.none { it.isDigit() }) {
+            return "密码至少 6 位，且要同时包含小写字母和数字"
+        }
         val current = state.value.profile
         val hash = sha256(password)
         return when {

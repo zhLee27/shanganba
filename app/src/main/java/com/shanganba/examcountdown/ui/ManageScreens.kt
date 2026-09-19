@@ -67,6 +67,7 @@ fun NodesScreen(vm: AppViewModel, state: PersistedState, onBack: () -> Unit) {
     val c = LocalSgColors.current
     var editing by remember { mutableStateOf<ExamNode?>(null) }
     var showNew by remember { mutableStateOf(false) }
+    var pendingDeleteNode by remember { mutableStateOf<ExamNode?>(null) }
     val scroll = rememberScrollState()
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -122,7 +123,7 @@ fun NodesScreen(vm: AppViewModel, state: PersistedState, onBack: () -> Unit) {
                         Spacer(Modifier.width(8.dp))
                         SgSoftButton("编辑") { editing = node }
                         Spacer(Modifier.width(8.dp))
-                        SgSoftButton("删除") { vm.deleteNode(node.id) }
+                        SgSoftButton("删除") { pendingDeleteNode = node }
                     }
                 }
             }
@@ -139,6 +140,15 @@ fun NodesScreen(vm: AppViewModel, state: PersistedState, onBack: () -> Unit) {
                 showNew = false
                 editing = null
             }
+        )
+    }
+
+    pendingDeleteNode?.let { node ->
+        SgConfirmDialog(
+            title = "删除考试节点",
+            message = "确定删除「${node.title}」吗？删掉后首页倒计时会改用其他节点。",
+            onConfirm = { vm.deleteNode(node.id) },
+            onDismiss = { pendingDeleteNode = null }
         )
     }
 }
@@ -232,6 +242,7 @@ fun TasksScreen(vm: AppViewModel, state: PersistedState, onBack: () -> Unit) {
     val c = LocalSgColors.current
     var editing by remember { mutableStateOf<TaskTemplate?>(null) }
     var showNew by remember { mutableStateOf(false) }
+    var pendingDeleteTemplate by remember { mutableStateOf<TaskTemplate?>(null) }
     val scroll = rememberScrollState()
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -280,7 +291,7 @@ fun TasksScreen(vm: AppViewModel, state: PersistedState, onBack: () -> Unit) {
                         Spacer(Modifier.width(8.dp))
                         SgSoftButton("编辑") { editing = t }
                         Spacer(Modifier.width(8.dp))
-                        SgSoftButton("删除") { vm.deleteTemplate(t.id) }
+                        SgSoftButton("删除") { pendingDeleteTemplate = t }
                     }
                 }
             }
@@ -298,6 +309,15 @@ fun TasksScreen(vm: AppViewModel, state: PersistedState, onBack: () -> Unit) {
                 showNew = false
                 editing = null
             }
+        )
+    }
+
+    pendingDeleteTemplate?.let { t ->
+        SgConfirmDialog(
+            title = "删除任务模板",
+            message = "确定删除「${t.title}」吗？之后的每日任务里不会再出现它。",
+            onConfirm = { vm.deleteTemplate(t.id) },
+            onDismiss = { pendingDeleteTemplate = null }
         )
     }
 }
