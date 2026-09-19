@@ -28,8 +28,19 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val store = AppStore(app)
     val state: StateFlow<PersistedState> = store.state
 
-    fun mutate(block: (PersistedState) -> PersistedState) {
-        viewModelScope.launch { store.update(block) }
+    /** 增删改之后给个明确反馈 */
+    private fun say(msg: String) {
+        try {
+            android.widget.Toast.makeText(getApplication(), msg, android.widget.Toast.LENGTH_SHORT).show()
+        } catch (_: Exception) {
+        }
+    }
+
+    fun mutate(message: String? = null, block: (PersistedState) -> PersistedState) {
+        viewModelScope.launch {
+            store.update(block)
+            if (message != null) say(message)
+        }
     }
 
     fun today(state: PersistedState): DayRecord =
@@ -50,7 +61,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         moduleId: String = "",
         amount: Int = 0,
         unit: String = "题"
-    ) = mutate { s ->
+    ) = mutate("任务已添加") { s ->
         val key = todayKey()
         val day = s.days[key] ?: DayRecord(date = key)
         val task = ExtraTask(UUID.randomUUID().toString(), title, moduleId, amount, unit)
@@ -65,7 +76,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         s.copy(days = s.days + (key to day.copy(doneExtraIds = done)))
     }
 
-    fun removeExtraTask(id: String) = mutate { s ->
+    fun removeExtraTask(id: String) = mutate("任务已删除") { s ->
         val key = todayKey()
         val day = s.days[key] ?: return@mutate s
         s.copy(
@@ -78,7 +89,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---------- 打卡 ----------
 
-    fun checkInToday() = mutate { s ->
+    fun checkInToday() = mutate("打卡成功") { s ->
         val key = todayKey()
         if (s.lastCheckInDate == key) return@mutate s
         val yesterday = LocalDate.now().minusDays(1).toString()
@@ -94,7 +105,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---------- 考试节点 ----------
 
-    fun upsertNode(node: ExamNode) = mutate { s ->
+    fun upsertNode(node: ExamNode) = mutate("考试节点已保存") { s ->
         val exists = s.nodes.any { it.id == node.id }
         val nodes = if (exists) s.nodes.map { if (it.id == node.id) node else it } else s.nodes + node
         val fixed = if (node.pinned) nodes.map { if (it.id == node.id) it else it.copy(pinned = false) } else nodes
@@ -105,20 +116,20 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         s.copy(nodes = s.nodes.map { it.copy(pinned = it.id == id) })
     }
 
-    fun deleteNode(id: String) = mutate { s ->
+    fun deleteNode(id: String) = mutate("考试节点已删除") { s ->
         s.copy(nodes = s.nodes.filterNot { it.id == id })
     }
 
     // ---------- 任务模板 ----------
 
-    fun upsertTemplate(template: TaskTemplate) = mutate { s ->
+    fun upsertTemplate(template: TaskTemplate) = mutate("任务模板已保存") { s ->
         val exists = s.templates.any { it.id == template.id }
         val list = if (exists) s.templates.map { if (it.id == template.id) template else it }
         else s.templates + template
         s.copy(templates = list.sortedBy { it.order })
     }
 
-    fun deleteTemplate(id: String) = mutate { s ->
+    fun deleteTemplate(id: String) = mutate("任务模板已删除") { s ->
         s.copy(templates = s.templates.filterNot { it.id == id })
     }
 
@@ -130,13 +141,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---------- 模块 ----------
 
-    fun upsertModule(module: SubjectModule) = mutate { s ->
+    fun upsertModule(module: SubjectModule) = mutate("题型已保存") { s ->
         val exists = s.modules.any { it.id == module.id }
         val list = if (exists) s.modules.map { if (it.id == module.id) module else it } else s.modules + module
         s.copy(modules = list.sortedBy { it.order })
     }
 
-    fun deleteModule(id: String) = mutate { s ->
+    fun deleteModule(id: String) = mutate("题型已删除") { s ->
         s.copy(modules = s.modules.filterNot { it.id == id })
     }
 
@@ -223,9 +234,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun logout() = mutate { s -> s.copy(profile = s.profile.copy(loggedIn = false)) }
+    fun logout() = mutate("已退出登录") { s -> s.copy(profile = s.profile.copy(loggedIn = false)) }
 
-    fun updateProfile(block: (Profile) -> Profile) = mutate { s ->
+    fun updateProfile(block: (Profile) -> Profile) = mutate("资料已保存") { s ->
         val next = block(s.profile)
         val saved = ProfileData(next.nickname, next.signature, next.avatarPath)
         s.copy(
@@ -234,7 +245,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         )
     }
 
-    fun updateTimerPresets(presets: List<Int>) = mutate { s ->
+    fun updateTimerPresets(presets: List<Int>) = mutate("预设已更新") { s ->
         s.copy(settings = s.settings.copy(timerPresets = presets.distinct().sorted()))
     }
 
@@ -281,13 +292,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---------- 错题 ----------
 
-    fun upsertQuestion(record: QuestionRecord) = mutate { s ->
+    fun upsertQuestion(record: QuestionRecord) = mutate("错题已保存") { s ->
         val exists = s.questions.any { it.id == record.id }
         val list = if (exists) s.questions.map { if (it.id == record.id) record else it } else s.questions + record
         s.copy(questions = list.sortedByDescending { it.createdAt })
     }
 
-    fun markQuestionMastered(id: String, mastered: Boolean) = mutate { s ->
+    fun markQuestionMastered(id: String, mastered: Boolean) = mutate("掌握状态已更新") { s ->
         s.copy(
             questions = s.questions.map {
                 if (it.id == id) it.copy(masteredAt = if (mastered) System.currentTimeMillis() else 0L)
@@ -300,19 +311,19 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         s.copy(questions = s.questions.map { if (it.id == id) it.copy(reviewCount = it.reviewCount + 1) else it })
     }
 
-    fun deleteQuestion(id: String) = mutate { s ->
+    fun deleteQuestion(id: String) = mutate("错题已删除") { s ->
         s.copy(questions = s.questions.filterNot { it.id == id })
     }
 
     // ---------- 知识框架 ----------
 
-    fun upsertKnowledge(node: KnowledgeNode) = mutate { s ->
+    fun upsertKnowledge(node: KnowledgeNode) = mutate("知识节点已保存") { s ->
         val exists = s.knowledge.any { it.id == node.id }
         val list = if (exists) s.knowledge.map { if (it.id == node.id) node else it } else s.knowledge + node
         s.copy(knowledge = list)
     }
 
-    fun deleteKnowledge(id: String) = mutate { s ->
+    fun deleteKnowledge(id: String) = mutate("知识节点已删除") { s ->
         val doomed = mutableSetOf(id)
         var grew = true
         while (grew) {
