@@ -263,6 +263,9 @@ fun SgApp(vm: AppViewModel) {
                                 },
                                 label = "tab"
                             ) { currentTab ->
+                            // 每页内部再套一层 Column：标题栏和内容要上下排列，
+                            // 不能直接作为 AnimatedContent 的兄弟节点（那会重叠）
+                            Column(modifier = Modifier.fillMaxSize()) {
                             when (currentTab) {
                                 0 -> {
                                     SgScreenTitle("上岸吧") {
@@ -318,6 +321,7 @@ fun SgApp(vm: AppViewModel) {
                                     onOpenEditProfile = { overlay = Overlay.PROFILE_EDIT },
                                     onLogout = { vm.logout() }
                                 )
+                            }
                             }
                             }
                         }
