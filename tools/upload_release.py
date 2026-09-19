@@ -43,6 +43,28 @@ def request(method, url, token, data=None, content_type="application/json", raw=
         return e.code, detail
 
 
+def changelog_entry(project_root, version):
+    """从 CHANGELOG.md 里取出某个版本的更新条目和日期"""
+    path = os.path.join(project_root, "CHANGELOG.md")
+    if not os.path.exists(path):
+        return "", ""
+    lines = open(path, "r", encoding="utf-8").read().splitlines()
+    body, date, capturing = [], "", False
+    for line in lines:
+        if line.startswith("## "):
+            if capturing:
+                break
+            heading = line[3:].strip()
+            if heading.startswith(version):
+                capturing = True
+                if "（" in heading and "）" in heading:
+                    date = heading.split("（", 1)[1].split("）", 1)[0].strip()
+                continue
+        if capturing:
+            body.append(line)
+    return "\n".join(body).strip(), date
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", required=True, help="owner/name")
@@ -72,6 +94,8 @@ def main():
     args.token = token
 
     dist = os.path.abspath(args.dist)
+    project_root = os.path.dirname(dist)
+    version = args.tag.lstrip("v")
     candidates = [f for f in os.listdir(dist) if f.endswith(".apk")]
     if not candidates:
         print("dist 里没有 APK")
@@ -127,8 +151,10 @@ def main():
     version_path = os.path.join(dist, "version.json")
     with open(version_path, "r", encoding="utf-8") as fh:
         manifest = json.load(fh)
-    notes = args.notes or manifest.get("notes") or ("上岸吧 " + os.path.basename(apk_path))
+    entry, entry_date = changelog_entry(project_root, version)
+    notes = args.notes or entry or manifest.get("notes") or ("上岸吧 " + version)
     print("APK：%s（%.2f MB）" % (apk_name, os.path.getsize(apk_path) / 1048576.0))
+    print("更新内容：%s" % ("（来自 CHANGELOG.md）" if entry and not args.notes else "（命令行传入）"))
     print("创建 release %s …" % args.tag)
     status, release = request("POST", "%s/repos/%s/releases" % (API, repo), args.token, {
         "tag_name": args.tag,
@@ -159,6 +185,8 @@ def main():
     # 生成带直链的 version.json，同时覆盖本地文件
     manifest["url"] = apk_url
     manifest["notes"] = notes
+    if entry_date:
+        manifest["date"] = entry_date
     with open(version_path, "w", encoding="utf-8") as fh:
         json.dump(manifest, fh, ensure_ascii=False, indent=2)
 

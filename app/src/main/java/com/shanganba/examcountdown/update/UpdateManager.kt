@@ -19,6 +19,7 @@ data class UpdateManifest(
     val url: String = "",
     val sha256: String = "",
     val notes: String = "",
+    val date: String = "",
     val minSupportedVersionCode: Int = 1
 )
 

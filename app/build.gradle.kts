@@ -23,12 +23,6 @@ android {
         versionCode = 5
         versionName = "1.2.2"
         resourceConfigurations += listOf("zh-rCN", "en")
-        // 内置的更新地址：永远指向最新一个 Release 的 version.json，发新版不用改这里
-        buildConfigField(
-            "String",
-            "DEFAULT_UPDATE_URL",
-            "\"https://github.com/zhLee27/shanganba/releases/latest/download/version.json\""
-        )
     }
 
     signingConfigs {
@@ -67,7 +61,6 @@ android {
 
     buildFeatures {
         compose = true
-        buildConfig = true
     }
 
     packaging {

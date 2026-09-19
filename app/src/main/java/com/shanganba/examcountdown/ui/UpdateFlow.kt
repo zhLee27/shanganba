@@ -15,7 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.shanganba.examcountdown.BuildConfig
+import com.shanganba.examcountdown.AppConfig
 import com.shanganba.examcountdown.data.Settings
 import com.shanganba.examcountdown.update.UpdateManager
 import com.shanganba.examcountdown.update.UpdateManifest
@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
  * 所以以后我发新版本，你手机上的自动检测会立刻看到，不用改任何设置。
  */
 fun Settings.effectiveUpdateUrl(): String =
-    updateUrl.ifBlank { BuildConfig.DEFAULT_UPDATE_URL }
+    updateUrl.ifBlank { AppConfig.DEFAULT_UPDATE_URL }
 
 @Composable
 fun UpdateAvailableDialog(manifest: UpdateManifest, onDismiss: () -> Unit) {
@@ -38,9 +38,27 @@ fun UpdateAvailableDialog(manifest: UpdateManifest, onDismiss: () -> Unit) {
 
     AlertDialog(
         onDismissRequest = { if (!busy) onDismiss() },
-        title = { Text("发现新版本 ${manifest.versionName}", style = SgType.cardTitle) },
+        title = {
+            Text(
+                buildString {
+                    append("发现新版本 ")
+                    append(manifest.versionName.ifBlank { "未知版本" })
+                    if (manifest.date.isNotBlank()) {
+                        append(" · ")
+                        append(manifest.date)
+                    }
+                },
+                style = SgType.cardTitle
+            )
+        },
         text = {
             Column {
+                Text(
+                    "本次更新内容",
+                    style = SgType.chip,
+                    color = c.inkMuted
+                )
+                Spacer(Modifier.height(6.dp))
                 Text(
                     manifest.notes.ifBlank { "有新版本可以更新，建议装上。" },
                     style = SgType.bodyLong,
