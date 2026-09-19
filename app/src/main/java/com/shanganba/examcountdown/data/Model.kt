@@ -114,6 +114,8 @@ data class Profile(
     val signature: String = "",
     val avatarPath: String = "",
     val loggedIn: Boolean = false,
+    /** 身份标识，例如「至尊VIP」 */
+    val tier: String = "",
     /** 账号 → 资料，保证头像、昵称、签名跟着账号走 */
     val accounts: Map<String, ProfileData> = emptyMap()
 )
@@ -165,6 +167,9 @@ data class Settings(
     val darkMode: String = "system",       // system / light / dark
     val startDate: String = "",            // yyyy-MM-dd
     val targetScore: Double = 135.0,
+    /** 目标分拆成两门，总目标 = 行测 + 申论 */
+    val targetXingce: Double = 75.0,
+    val targetShenlun: Double = 60.0,
     val dailyReminderOn: Boolean = true,
     val dailyReminderMinute: Int = 20 * 60,
     /** 每周哪几天提醒：1=周一 … 7=周日 */

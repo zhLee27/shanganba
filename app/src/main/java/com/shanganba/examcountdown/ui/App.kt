@@ -28,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -251,7 +252,18 @@ fun SgApp(vm: AppViewModel) {
                                 .fillMaxSize()
                                 .padding(inner)
                         ) {
-                            when (tab) {
+                            androidx.compose.animation.AnimatedContent(
+                                targetState = tab,
+                                transitionSpec = {
+                                    val forward = targetState > initialState
+                                    (androidx.compose.animation.slideInHorizontally { if (forward) it else -it } +
+                                        androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(220))) togetherWith
+                                        (androidx.compose.animation.slideOutHorizontally { if (forward) -it / 3 else it / 3 } +
+                                            androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(160)))
+                                },
+                                label = "tab"
+                            ) { currentTab ->
+                            when (currentTab) {
                                 0 -> {
                                     SgScreenTitle("上岸吧") {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -306,6 +318,7 @@ fun SgApp(vm: AppViewModel) {
                                     onOpenEditProfile = { overlay = Overlay.PROFILE_EDIT },
                                     onLogout = { vm.logout() }
                                 )
+                            }
                             }
                         }
                     }

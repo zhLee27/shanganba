@@ -74,6 +74,25 @@ fun ProfileCard(state: PersistedState, onLogin: () -> Unit, onEdit: () -> Unit, 
                     style = SgType.cardTitle,
                     color = c.inkTitle
                 )
+                if (p.loggedIn && p.tier.isNotBlank()) {
+                    Spacer(Modifier.height(4.dp))
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(
+                                androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                    listOf(androidx.compose.ui.graphics.Color(0xFFE8B85C), androidx.compose.ui.graphics.Color(0xFFF2D07A))
+                                )
+                            )
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            "👑 ${p.tier}",
+                            style = SgType.chip,
+                            color = androidx.compose.ui.graphics.Color(0xFF6B4A08)
+                        )
+                    }
+                }
                 Spacer(Modifier.height(3.dp))
                 Text(
                     if (p.loggedIn) {

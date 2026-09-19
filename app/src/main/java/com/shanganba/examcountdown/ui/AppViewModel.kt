@@ -182,13 +182,18 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 mutate { s ->
                     val saved = s.profile.accounts[acc]
                     s.copy(
+                        // 备考起跑日默认 = 注册当天
+                        settings = if (s.settings.startDate.isBlank())
+                            s.settings.copy(startDate = java.time.LocalDate.now().toString())
+                        else s.settings,
                         profile = s.profile.copy(
                             account = acc,
                             passwordHash = hash,
                             nickname = saved?.nickname ?: acc,
                             signature = saved?.signature ?: "",
                             avatarPath = saved?.avatarPath ?: "",
-                            loggedIn = true
+                            loggedIn = true,
+                            tier = if (acc == "18395502059") "至尊VIP" else s.profile.tier
                         )
                     )
                 }

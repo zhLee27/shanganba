@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -65,6 +66,8 @@ fun SettingsScreen(
     var editUrl by remember { mutableStateOf(false) }
     var showCrash by remember { mutableStateOf(false) }
     var editingDay by remember { mutableStateOf<Int?>(null) }
+    var showReminderDialog by remember { mutableStateOf(false) }
+    var reminderPick by remember { mutableStateOf<Int?>(null) }
     var crashText by remember { mutableStateOf(CrashLogger.read(ctx)) }
     var versionStatus by remember { mutableStateOf("检查中…") }
 
@@ -180,7 +183,10 @@ fun SettingsScreen(
             SgSectionHeader("备考设置")
             SettingRow("备考起跑日", s.startDate.ifBlank { "首次启动日" }) { editStart = true }
             SgDivider()
-            SettingRow("目标分（笔试总分）", "${trimDouble(s.targetScore)} 分") { editTarget = true }
+            SettingRow(
+                "目标分（笔试总分）",
+                "${trimDouble(s.targetXingce + s.targetShenlun)} 分（行测 ${trimDouble(s.targetXingce)} + 申论 ${trimDouble(s.targetShenlun)}）"
+            ) { editTarget = true }
             SgDivider()
             SettingRow("每日任务模板", "${state.templates.count { it.enabled }} 条启用") { onOpenTasks() }
             SgDivider()
@@ -195,9 +201,11 @@ fun SettingsScreen(
                 Column(modifier = Modifier.weight(1f)) {
                     Text("每日计划提醒", style = SgType.body, color = c.ink)
                     Text(
-                        "当天任务没全部完成才提醒 · ${formatMinute(s.dailyReminderMinute)}",
+                        "当天任务没全部完成才提醒 · 已选 ${s.dailyReminderDays.size} 天",
                         style = SgType.meta, color = c.inkMuted
                     )
+                    Spacer(Modifier.height(6.dp))
+                    SgSoftButton("设置提醒时间") { showReminderDialog = true }
                     Spacer(Modifier.height(6.dp))
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(5.dp),
@@ -398,15 +406,42 @@ fun SettingsScreen(
         )
     }
     if (editTarget) {
-        TextInputDialog(
-            title = "目标分（笔试总分 200）",
-            label = "如 135",
-            initial = trimDouble(s.targetScore),
-            onDismiss = { editTarget = false },
-            onSave = { value ->
-                value.toDoubleOrNull()?.let { v -> vm.updateSettings { it.copy(targetScore = v) } }
-                editTarget = false
-            }
+        var xc by remember { mutableStateOf(trimDouble(s.targetXingce)) }
+        var sl by remember { mutableStateOf(trimDouble(s.targetShenlun)) }
+        AlertDialog(
+            onDismissRequest = { editTarget = false },
+            title = { Text("设置目标分", style = SgType.cardTitle) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    SgTextField(
+                        value = xc,
+                        onValueChange = { xc = it.filter { ch -> ch.isDigit() || ch == '.' }.take(5) },
+                        label = "行测目标分（满分 100）",
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                    )
+                    SgTextField(
+                        value = sl,
+                        onValueChange = { sl = it.filter { ch -> ch.isDigit() || ch == '.' }.take(5) },
+                        label = "申论目标分（满分 100）",
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                    )
+                    val total = (xc.toDoubleOrNull() ?: 0.0) + (sl.toDoubleOrNull() ?: 0.0)
+                    Text(
+                        "合计目标：${trimDouble(total)} 分（笔试总分 200）",
+                        style = SgType.meta,
+                        color = c.accent
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val x = xc.toDoubleOrNull() ?: s.targetXingce
+                    val y = sl.toDoubleOrNull() ?: s.targetShenlun
+                    vm.updateSettings { it.copy(targetXingce = x, targetShenlun = y, targetScore = x + y) }
+                    editTarget = false
+                }) { Text("保存") }
+            },
+            dismissButton = { TextButton(onClick = { editTarget = false }) { Text("取消") } }
         )
     }
     if (editDailyTime) {
@@ -430,6 +465,94 @@ fun SettingsScreen(
                 editingDay = null
             }
         )
+    }
+
+    if (showReminderDialog) {
+        var days by remember { mutableStateOf(s.dailyReminderDays.toSet()) }
+        var times by remember { mutableStateOf(s.dailyReminderTimes) }
+        var unified by remember { mutableIntStateOf(s.dailyReminderMinute) }
+        val week = listOf("一", "二", "三", "四", "五", "六", "日")
+        AlertDialog(
+            onDismissRequest = { showReminderDialog = false },
+            title = { Text("每日计划提醒", style = SgType.cardTitle) },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier
+                        .heightIn(max = 420.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("一键统一时间", style = SgType.body, color = c.ink, modifier = Modifier.weight(1f))
+                        SgChip(
+                            "设为 ${formatMinute(unified)}",
+                            c.accent,
+                            modifier = Modifier.clickable { reminderPick = 0 }
+                        )
+                    }
+                    SgDivider()
+                    (1..7).forEach { day ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                "周" + week[day - 1],
+                                style = SgType.body,
+                                color = if (days.contains(day)) c.ink else c.inkFaint,
+                                modifier = Modifier.weight(1f)
+                            )
+                            SgChip(
+                                formatMinute(times[day] ?: unified),
+                                if (times.containsKey(day)) c.accent else c.inkMuted,
+                                modifier = Modifier.clickable { if (days.contains(day)) reminderPick = day }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Switch(
+                                checked = days.contains(day),
+                                onCheckedChange = { on ->
+                                    days = if (on) days + day else days - day
+                                    if (!on) times = times - day
+                                }
+                            )
+                        }
+                    }
+                    Text(
+                        "当天任务全部完成就不提醒；改统一时间会清掉单独设置。",
+                        style = SgType.meta,
+                        color = c.inkFaint
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.updateSettings {
+                        it.copy(
+                            dailyReminderDays = days.sorted(),
+                            dailyReminderTimes = times,
+                            dailyReminderMinute = unified
+                        )
+                    }
+                    showReminderDialog = false
+                }) { Text("保存") }
+            },
+            dismissButton = { TextButton(onClick = { showReminderDialog = false }) { Text("取消") } }
+        )
+        // 点某天 / 统一时间 → 弹出滚轮选择
+        // 用独立的编辑器同步回本弹窗的临时状态
+        reminderPick?.let { target ->
+            TimePickDialog(
+                title = if (target == 0) "统一提醒时间" else "周" + week[target - 1] + " 的提醒时间",
+                initial = formatMinute(if (target == 0) unified else (times[target] ?: unified)),
+                onDismiss = { reminderPick = null },
+                onSave = { v ->
+                    if (target == 0) {
+                        unified = v
+                        times = emptyMap()
+                    } else {
+                        times = times + (target to v)
+                    }
+                    reminderPick = null
+                }
+            )
+        }
     }
     if (editNodeTime) {
         TimePickDialog(
