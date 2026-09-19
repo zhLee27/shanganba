@@ -4,6 +4,8 @@ import android.os.SystemClock
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,9 +30,11 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +43,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.shanganba.examcountdown.data.ActiveTimer
@@ -69,6 +75,10 @@ fun PracticeTab(
     var showNewModule by remember { mutableStateOf(false) }
     var editingModule by remember { mutableStateOf<SubjectModule?>(null) }
     var showCustomMinutes by remember { mutableStateOf(false) }
+    var presetDeleteMode by remember { mutableStateOf(false) }
+    var dragAccum by remember { mutableFloatStateOf(0f) }
+    val currentOrdered by rememberUpdatedState(state.modules.sortedBy { it.order })
+    val rowHeightPx = with(LocalDensity.current) { 54.dp.toPx() }
 
     val module = state.modules.firstOrNull { it.id == moduleId } ?: state.modules.firstOrNull()
 
@@ -88,9 +98,9 @@ fun PracticeTab(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         SgCard {
-            SgSectionHeader("本次刷什么", "点名字切换，✎ 改，✕ 删")
+            SgSectionHeader("本次刷什么", "长按拖动排序")
             Spacer(Modifier.height(4.dp))
-            val ordered = state.modules.sortedBy { it.order }
+            val ordered = currentOrdered
             ordered.forEachIndexed { index, m ->
                 val color = moduleColorOf(m.id, index)
                 val picked = m.id == moduleId
@@ -101,6 +111,28 @@ fun PracticeTab(
                         .clip(RoundedCornerShape(16.dp))
                         .background(if (picked) color.copy(alpha = 0.14f) else Color.Transparent)
                         .clickable { moduleId = m.id }
+                        .pointerInput(m.id) {
+                            detectDragGesturesAfterLongPress(
+                                onDragStart = { dragAccum = 0f },
+                                onDragEnd = { dragAccum = 0f },
+                                onDragCancel = { dragAccum = 0f },
+                                onDrag = { change, amount ->
+                                    change.consume()
+                                    dragAccum += amount.y
+                                    val list = currentOrdered
+                                    val cur = list.indexOfFirst { it.id == m.id }
+                                    if (cur >= 0) {
+                                        if (dragAccum > rowHeightPx * 0.6f && cur < list.lastIndex) {
+                                            vm.moveModuleTo(m.id, cur + 1)
+                                            dragAccum -= rowHeightPx
+                                        } else if (dragAccum < -rowHeightPx * 0.6f && cur > 0) {
+                                            vm.moveModuleTo(m.id, cur - 1)
+                                            dragAccum += rowHeightPx
+                                        }
+                                    }
+                                }
+                            )
+                        }
                         .padding(start = 10.dp, end = 4.dp, top = 6.dp, bottom = 6.dp)
                 ) {
                     Box(
@@ -122,8 +154,6 @@ fun PracticeTab(
                         color = c.inkMuted
                     )
                     Spacer(Modifier.width(6.dp))
-                    IconTextButton("↑") { vm.moveModule(m.id, -1) }
-                    IconTextButton("↓") { vm.moveModule(m.id, 1) }
                     IconTextButton("✎") { editingModule = m }
                     IconTextButton("✕", danger = true) {
                         vm.deleteModule(m.id)
@@ -168,7 +198,7 @@ fun PracticeTab(
             }
         }
 
-        SgCard {
+        SgCard(onClick = { if (presetDeleteMode) presetDeleteMode = false }) {
             SgSectionHeader("计时方式", "随时可改")
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -176,30 +206,58 @@ fun PracticeTab(
                 SegButton("倒计时", countDown, Modifier.weight(1f)) { countDown = true }
             }
             Spacer(Modifier.height(12.dp))
-            Text("预设时长（点一下选用）", style = SgType.meta, color = c.inkMuted)
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    if (presetDeleteMode) "点 ✕ 删除预设，点空白处退出" else "预设时长（点选，长按可删除）",
+                    style = SgType.meta,
+                    color = if (presetDeleteMode) c.accent2 else c.inkMuted,
+                    modifier = Modifier.weight(1f)
+                )
+                if (presetDeleteMode) {
+                    Box(
+                        modifier = Modifier
+                            .size(30.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { presetDeleteMode = false },
+                        contentAlignment = Alignment.Center
+                    ) { Text("🗑", style = SgType.chip, color = c.accent2) }
+                }
+            }
             Spacer(Modifier.height(6.dp))
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 state.settings.timerPresets.forEach { m ->
-                    SgChip(
-                        "$m 分",
-                        if (minutes == m) c.accent else c.inkMuted,
-                        modifier = Modifier.clickable { minutes = m }
-                    )
-                }
-                SgChip("自定义", c.inkMuted, modifier = Modifier.clickable { showCustomMinutes = true })
-            }
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SgSoftButton("＋ 把 $minutes 分存为预设") {
-                    vm.updateTimerPresets(state.settings.timerPresets + minutes)
-                }
-                if (state.settings.timerPresets.contains(minutes)) {
-                    SgSoftButton("删除该预设") {
-                        vm.updateTimerPresets(state.settings.timerPresets - minutes)
+                    if (presetDeleteMode) {
+                        SgChip(
+                            "$m 分 ✕",
+                            c.accent2,
+                            modifier = Modifier.clickable {
+                                vm.updateTimerPresets(state.settings.timerPresets - m)
+                            }
+                        )
+                    } else {
+                        SgChip(
+                            "$m 分",
+                            if (minutes == m) c.accent else c.inkMuted,
+                            modifier = Modifier.pointerInput(m) {
+                                detectTapGestures(
+                                    onTap = { minutes = m },
+                                    onLongPress = { presetDeleteMode = true }
+                                )
+                            }
+                        )
                     }
+                }
+                if (!presetDeleteMode) {
+                    SgChip("自定义", c.inkMuted, modifier = Modifier.clickable { showCustomMinutes = true })
+                }
+            }
+            if (!presetDeleteMode && !state.settings.timerPresets.contains(minutes)) {
+                Spacer(Modifier.height(8.dp))
+                SgSoftButton("把 $minutes 分存为预设") {
+                    vm.updateTimerPresets(state.settings.timerPresets + minutes)
                 }
             }
             Spacer(Modifier.height(12.dp))

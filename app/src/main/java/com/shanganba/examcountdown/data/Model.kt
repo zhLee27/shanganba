@@ -92,6 +92,16 @@ data class TaskTemplate(
 data class ExtraTask(val id: String, val title: String)
 
 @Serializable
+data class Profile(
+    val account: String = "",
+    val passwordHash: String = "",
+    val nickname: String = "上岸吧用户",
+    val signature: String = "",
+    val avatarPath: String = "",
+    val loggedIn: Boolean = false
+)
+
+@Serializable
 data class ActiveTimer(
     val moduleId: String,
     val mode: String,               // COUNT_UP / COUNT_DOWN
@@ -167,6 +177,7 @@ data class PersistedState(
     val lastCheckInDate: String = "",
     val scoreConfigs: List<ScoreConfig> = defaultScoreConfigs(),
     val activeTimer: ActiveTimer? = null,
+    val profile: Profile = Profile(),
     val settings: Settings = Settings()
 )
 

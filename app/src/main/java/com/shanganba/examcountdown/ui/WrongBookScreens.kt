@@ -61,21 +61,14 @@ fun WrongBookTab(
     val c = LocalSgColors.current
     val ctx = LocalContext.current
     var pendingPhoto by remember { mutableStateOf<File?>(null) }
+    var cropTarget by remember { mutableStateOf<String?>(null) }
     var showManual by remember { mutableStateOf(false) }
     var filterPending by remember { mutableStateOf(false) }
 
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
         val file = pendingPhoto
         if (ok && file != null) {
-            vm.upsertQuestion(
-                QuestionRecord(
-                    id = UUID.randomUUID().toString(),
-                    moduleId = state.modules.firstOrNull()?.id ?: "",
-                    source = "CAMERA",
-                    stemImagePath = file.absolutePath,
-                    errorCause = ""
-                )
-            )
+            cropTarget = file.absolutePath
         }
     }
     val fileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
@@ -85,17 +78,31 @@ fun WrongBookTab(
                 ctx.contentResolver.openInputStream(uri)?.use { input ->
                     dest.outputStream().use { output -> input.copyTo(output) }
                 }
+                cropTarget = dest.absolutePath
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    // 裁剪界面：整屏接管，裁完再入库
+    val cropping = cropTarget
+    if (cropping != null) {
+        PhotoCropScreen(
+            sourcePath = cropping,
+            onCancel = { cropTarget = null },
+            onDone = { cropped ->
                 vm.upsertQuestion(
                     QuestionRecord(
                         id = UUID.randomUUID().toString(),
                         moduleId = state.modules.firstOrNull()?.id ?: "",
-                        source = "FILE",
-                        stemImagePath = dest.absolutePath
+                        source = "CAMERA",
+                        stemImagePath = cropped
                     )
                 )
-            } catch (_: Exception) {
+                cropTarget = null
             }
-        }
+        )
+        return
     }
 
     val all = state.questions.sortedByDescending { it.createdAt }
@@ -146,7 +153,18 @@ fun WrongBookTab(
             if (all.isEmpty()) {
                 Text("还没有错题，刷完卷子把错的拍进来吧。", style = SgType.bodyLong, color = c.inkMuted)
             }
-            all.take(60).forEach { q ->
+            listOf(
+                "行测错题" to all.filter { q ->
+                    (state.modules.firstOrNull { it.id == q.moduleId }?.subject ?: "XINGCE") != "SHENLUN"
+                },
+                "申论错题" to all.filter { q ->
+                    state.modules.firstOrNull { it.id == q.moduleId }?.subject == "SHENLUN"
+                }
+            ).forEach { (groupLabel, group) ->
+                if (group.isEmpty()) return@forEach
+                Spacer(Modifier.height(10.dp))
+                Text("$groupLabel · ${group.size} 道", style = SgType.cardTitle, color = c.inkTitle)
+                group.take(60).forEach { q ->
                 val name = state.modules.firstOrNull { it.id == q.moduleId }?.name ?: "未分类"
                 val color = moduleColorOf(q.moduleId)
                 Row(
@@ -190,6 +208,7 @@ fun WrongBookTab(
                                 if (q.masteredAt > 0L) ModuleColors[3] else ModuleColors[1])
                         }
                     }
+                }
                 }
             }
         }

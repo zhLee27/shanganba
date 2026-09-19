@@ -11,6 +11,7 @@ import com.shanganba.examcountdown.data.ExtraTask
 import com.shanganba.examcountdown.data.KnowledgeNode
 import com.shanganba.examcountdown.data.PersistedState
 import com.shanganba.examcountdown.data.PracticeSession
+import com.shanganba.examcountdown.data.Profile
 import com.shanganba.examcountdown.data.QuestionRecord
 import com.shanganba.examcountdown.data.SubjectModule
 import com.shanganba.examcountdown.data.Settings
@@ -142,6 +143,59 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         val item = list.removeAt(index)
         list.add(target, item)
         s.copy(modules = list.mapIndexed { i, m -> m.copy(order = i + 1) })
+    }
+
+    /** 拖动排序：把某个模块插到指定位置 */
+    fun moveModuleTo(id: String, targetIndex: Int) = mutate { s ->
+        val list = s.modules.sortedBy { it.order }.toMutableList()
+        val from = list.indexOfFirst { it.id == id }
+        if (from < 0 || targetIndex !in list.indices || from == targetIndex) return@mutate s
+        val item = list.removeAt(from)
+        list.add(targetIndex, item)
+        s.copy(modules = list.mapIndexed { i, m -> m.copy(order = i + 1) })
+    }
+
+    // ---------- 账号与个人资料（只存本机，不联网） ----------
+
+    private fun sha256(text: String): String {
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        return digest.digest(text.toByteArray()).joinToString("") { "%02x".format(it) }
+    }
+
+    /** 返回 null 表示成功，否则是错误提示 */
+    fun loginOrRegister(account: String, password: String): String? {
+        val acc = account.trim()
+        if (acc.length < 2) return "账号至少 2 个字符"
+        if (password.length < 4) return "密码至少 4 位"
+        val current = state.value.profile
+        val hash = sha256(password)
+        return when {
+            current.account.isBlank() -> {
+                mutate { s ->
+                    s.copy(
+                        profile = s.profile.copy(
+                            account = acc,
+                            passwordHash = hash,
+                            nickname = if (s.profile.nickname == "上岸吧用户") acc else s.profile.nickname,
+                            loggedIn = true
+                        )
+                    )
+                }
+                null
+            }
+            current.account != acc -> "本机已注册账号「${current.account}」，要先注销才能换账号"
+            current.passwordHash != hash -> "密码不对"
+            else -> {
+                mutate { s -> s.copy(profile = s.profile.copy(loggedIn = true)) }
+                null
+            }
+        }
+    }
+
+    fun logout() = mutate { s -> s.copy(profile = s.profile.copy(loggedIn = false)) }
+
+    fun updateProfile(block: (Profile) -> Profile) = mutate { s ->
+        s.copy(profile = block(s.profile))
     }
 
     fun updateTimerPresets(presets: List<Int>) = mutate { s ->

@@ -41,7 +41,10 @@ fun SettingsScreen(
     vm: AppViewModel,
     state: PersistedState,
     onOpenTasks: () -> Unit,
-    onOpenKnowledge: () -> Unit
+    onOpenKnowledge: () -> Unit,
+    onOpenLogin: () -> Unit,
+    onOpenEditProfile: () -> Unit,
+    onLogout: () -> Unit
 ) {
     val c = LocalSgColors.current
     val ctx = LocalContext.current
@@ -111,6 +114,13 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Spacer(Modifier.height(2.dp))
+
+        ProfileCard(
+            state = state,
+            onLogin = onOpenLogin,
+            onEdit = onOpenEditProfile,
+            onLogout = onLogout
+        )
 
         SgCard {
             SgSectionHeader("外观")

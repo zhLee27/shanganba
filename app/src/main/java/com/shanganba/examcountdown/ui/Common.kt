@@ -31,6 +31,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -251,7 +253,8 @@ fun SgTextField(
     modifier: Modifier = Modifier,
     singleLine: Boolean = true,
     minLines: Int = 1,
-    keyboardType: KeyboardType = KeyboardType.Text
+    keyboardType: KeyboardType = KeyboardType.Text,
+    password: Boolean = false
 ) {
     val c = LocalSgColors.current
     OutlinedTextField(
@@ -264,6 +267,7 @@ fun SgTextField(
         textStyle = SgType.body,
         shape = RoundedCornerShape(14.dp),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        visualTransformation = if (password) PasswordVisualTransformation() else VisualTransformation.None,
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = c.surface2,
             unfocusedContainerColor = c.surface2,

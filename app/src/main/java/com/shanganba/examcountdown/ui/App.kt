@@ -49,7 +49,7 @@ private enum class Tab(val emoji: String, val label: String) {
     MINE("⚙️", "我的")
 }
 
-private enum class Overlay { NODES, TASKS, KNOWLEDGE, HISTORY, CHECKIN, QUESTION }
+private enum class Overlay { NODES, TASKS, KNOWLEDGE, HISTORY, CHECKIN, QUESTION, LOGIN, PROFILE_EDIT }
 
 @Composable
 fun SgApp(vm: AppViewModel) {
@@ -191,6 +191,8 @@ fun SgApp(vm: AppViewModel) {
                             Overlay.HISTORY -> PracticeHistoryScreen(state, onBack = { overlay = null })
                             Overlay.CHECKIN -> CheckinScreen(state, onBack = { overlay = null })
                             Overlay.QUESTION -> QuestionDetailScreen(vm, state, questionId, onBack = { overlay = null })
+                            Overlay.LOGIN -> LoginScreen(vm, state, onBack = { overlay = null })
+                            Overlay.PROFILE_EDIT -> ProfileEditScreen(vm, state, onBack = { overlay = null })
                             null -> Unit
                         }
                     }
@@ -267,7 +269,10 @@ fun SgApp(vm: AppViewModel) {
                                     vm = vm,
                                     state = state,
                                     onOpenTasks = { overlay = Overlay.TASKS },
-                                    onOpenKnowledge = { overlay = Overlay.KNOWLEDGE }
+                                    onOpenKnowledge = { overlay = Overlay.KNOWLEDGE },
+                                    onOpenLogin = { overlay = Overlay.LOGIN },
+                                    onOpenEditProfile = { overlay = Overlay.PROFILE_EDIT },
+                                    onLogout = { vm.logout() }
                                 )
                             }
                         }
