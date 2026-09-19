@@ -78,6 +78,31 @@ fun PracticeTab(
     var showNewModule by remember { mutableStateOf(false) }
     var pendingDeleteModule by remember { mutableStateOf<SubjectModule?>(null) }
     var pendingDeletePreset by remember { mutableStateOf<Int?>(null) }
+    var pendingClearPresets by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(setOf<String>()) }
+
+    fun pickModule(m: SubjectModule) {
+        moduleId = m.id
+        if (m.defaultQuestionCount > 0) questionCount = m.defaultQuestionCount
+        if (m.defaultSeconds > 0) minutes = (m.defaultSeconds / 60).coerceAtLeast(1)
+    }
+
+    fun startWith(m: SubjectModule) {
+        val q = if (m.defaultQuestionCount > 0) m.defaultQuestionCount else questionCount
+        val mins = if (m.defaultSeconds > 0) m.defaultSeconds / 60 else minutes
+        val now = System.currentTimeMillis()
+        onStart(
+            ActiveTimer(
+                moduleId = m.id,
+                mode = if (countDown) "COUNT_DOWN" else "COUNT_UP",
+                plannedSeconds = mins * 60,
+                questionTarget = q,
+                startedAtWall = now,
+                lastResumeElapsed = SystemClock.elapsedRealtime(),
+                endAlarmAt = now + mins * 60_000L
+            )
+        )
+    }
     var editingModule by remember { mutableStateOf<SubjectModule?>(null) }
     var showCustomMinutes by remember { mutableStateOf(false) }
     var presetDeleteMode by remember { mutableStateOf(false) }
@@ -202,17 +227,12 @@ fun PracticeTab(
         SgCard {
             SgSectionHeader("本次题量", "按纸质卷实际题数")
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val step = if ((module?.defaultQuestionCount ?: 20) <= 5) 1 else 5
-                CounterButton("−$step") { questionCount = (questionCount - step).coerceAtLeast(1) }
                 Text(
                     "$questionCount",
                     style = SgType.bigStat,
                     color = c.inkTitle,
-                    modifier = Modifier
-                        .width(80.dp)
-                        .padding(horizontal = 8.dp)
+                    modifier = Modifier.padding(horizontal = 2.dp)
                 )
-                CounterButton("＋$step") { questionCount = (questionCount + step).coerceAtMost(200) }
                 Spacer(Modifier.weight(1f))
                 Text(
                     "约 ${if (questionCount > 0) minutes * 60 / questionCount else 0} 秒 / 题",
@@ -244,7 +264,14 @@ fun PracticeTab(
                             .clip(RoundedCornerShape(10.dp))
                             .clickable { presetDeleteMode = false },
                         contentAlignment = Alignment.Center
-                    ) { Text("🗑", style = SgType.chip, color = c.accent2) }
+                    ) {
+                        Text(
+                            "🗑",
+                            style = SgType.chip,
+                            color = c.accent2,
+                            modifier = Modifier.clickable { pendingClearPresets = true }
+                        )
+                    }
                 }
             }
             Spacer(Modifier.height(6.dp))
@@ -274,12 +301,6 @@ fun PracticeTab(
                 }
                 if (!presetDeleteMode) {
                     SgChip("自定义", c.inkMuted, modifier = Modifier.clickable { showCustomMinutes = true })
-                }
-            }
-            if (!presetDeleteMode && !state.settings.timerPresets.contains(minutes)) {
-                Spacer(Modifier.height(8.dp))
-                SgSoftButton("把 $minutes 分存为预设") {
-                    vm.updateTimerPresets(state.settings.timerPresets + minutes)
                 }
             }
             Spacer(Modifier.height(12.dp))
@@ -371,6 +392,16 @@ fun PracticeTab(
             message = "确定删掉「$m 分」这个预设吗？",
             onConfirm = { vm.updateTimerPresets(state.settings.timerPresets - m) },
             onDismiss = { pendingDeletePreset = null }
+        )
+    }
+
+    if (pendingClearPresets) {
+        SgConfirmDialog(
+            title = "清空全部预设",
+            message = "确定把预设时长全部清空吗？清空后还能自己再添加。",
+            confirmText = "全部清空",
+            onConfirm = { vm.updateTimerPresets(emptyList()) },
+            onDismiss = { pendingClearPresets = false }
         )
     }
 
