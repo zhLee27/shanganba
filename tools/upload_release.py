@@ -9,6 +9,7 @@
 """
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -185,6 +186,13 @@ def main():
     # 生成带直链的 version.json，同时覆盖本地文件
     manifest["url"] = apk_url
     manifest["notes"] = notes
+    # 上传前按实际文件重算校验值，避免清单与 APK 不是同一次构建
+    digest = hashlib.sha256()
+    with open(apk_path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            digest.update(chunk)
+    manifest["sha256"] = digest.hexdigest()
+    manifest["size"] = os.path.getsize(apk_path)
     if entry_date:
         manifest["date"] = entry_date
     with open(version_path, "w", encoding="utf-8") as fh:
