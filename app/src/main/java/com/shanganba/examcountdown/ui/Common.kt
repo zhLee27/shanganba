@@ -302,6 +302,44 @@ fun SgStepButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifie
     }
 }
 
+/** 统一样式的分段切换（行测 / 申论），胶囊底色 + 选中填充主题色 */
+@Composable
+fun SgTabRow(
+    tabs: List<String>,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val c = LocalSgColors.current
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(c.surface2)
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        tabs.forEachIndexed { i, label ->
+            val on = i == selectedIndex
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(38.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(if (on) c.accent else Color.Transparent)
+                    .clickable { onSelect(i) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    label,
+                    style = SgType.button,
+                    color = if (on) c.onAccent else c.inkMuted
+                )
+            }
+        }
+    }
+}
+
 /** 统一的二次确认弹窗：删除这类不可撤销的操作都走它 */
 @Composable
 fun SgConfirmDialog(

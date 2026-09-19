@@ -72,6 +72,8 @@ fun SgApp(vm: AppViewModel) {
         var updateManifest by remember { mutableStateOf<UpdateManifest?>(null) }
         var confirmQuitTimer by remember { mutableStateOf(false) }
         var loginPrompt by remember { mutableStateOf(false) }
+        // 刷题页的行测/申论切换放在这里，计时结束后回来仍在原来那一页
+        var practiceSubject by remember { mutableStateOf("XINGCE") }
 
         // 手机滑动返回：优先关弹窗 → 关子页面 → 回首页 → 才退出应用
         BackHandler {
@@ -256,6 +258,8 @@ fun SgApp(vm: AppViewModel) {
                                 1 -> PracticeTab(
                                     vm = vm,
                                     state = state,
+                                    subject = practiceSubject,
+                                    onSubjectChange = { practiceSubject = it },
                                     onStart = { vm.startTimer(it); showResult = false },
                                     onOpenHistory = { overlay = Overlay.HISTORY }
                                 )

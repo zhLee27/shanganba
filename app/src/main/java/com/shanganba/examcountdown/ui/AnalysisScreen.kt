@@ -97,26 +97,11 @@ fun AnalysisTab(state: PersistedState) {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // 行测 / 申论 两个独立标签页
-        val tabIndex = if (subject == "XINGCE") 0 else 1
-        TabRow(
-            selectedTabIndex = tabIndex,
-            containerColor = Color.Transparent,
-            contentColor = c.accent
-        ) {
-            listOf("行测", "申论").forEachIndexed { i, label ->
-                Tab(
-                    selected = tabIndex == i,
-                    onClick = { subject = if (i == 0) "XINGCE" else "SHENLUN" },
-                    text = {
-                        Text(
-                            label,
-                            style = SgType.cardTitle,
-                            color = if (tabIndex == i) c.accent else c.inkMuted
-                        )
-                    }
-                )
-            }
-        }
+        SgTabRow(
+            tabs = listOf("行测", "申论"),
+            selectedIndex = if (subject == "XINGCE") 0 else 1,
+            onSelect = { subject = if (it == 0) "XINGCE" else "SHENLUN" }
+        )
         if (subject == "XINGCE") {
         SgCard {
             SgSectionHeader("行测模块正确率", if (hasData) "按安徽省考分值加权" else "还没有刷题数据")
@@ -127,25 +112,19 @@ fun AnalysisTab(state: PersistedState) {
         }
 
         SgCard {
-            SgSectionHeader("估分", "目标 ${state.settings.targetScore.toInt()} 分")
+            SgSectionHeader("行测估分", "目标 75 分（可在设置改）")
             Spacer(Modifier.height(6.dp))
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
-                    "%.1f".format(xingceScore + shenlunScore),
+                    "%.1f".format(xingceScore),
                     style = SgType.heroNumber,
                     color = c.accent
                 )
                 Spacer(Modifier.width(8.dp))
-                Text("分 / 200", style = SgType.meta, color = c.inkMuted, modifier = Modifier.padding(bottom = 8.dp))
+                Text("分 / 100", style = SgType.meta, color = c.inkMuted, modifier = Modifier.padding(bottom = 8.dp))
             }
             Spacer(Modifier.height(8.dp))
-            SgProgress(fraction = ((xingceScore + shenlunScore) / 200.0).toFloat())
-            Spacer(Modifier.height(8.dp))
-            Row {
-                SgLabelValue("行测", "%.1f".format(xingceScore), suffix = "/ 100")
-                Spacer(Modifier.width(22.dp))
-                SgLabelValue("申论", "%.1f".format(shenlunScore), suffix = "/ 100")
-            }
+            SgProgress(fraction = (xingceScore / 100.0).toFloat())
             if (!hasData) {
                 Spacer(Modifier.height(8.dp))
                 Text(
@@ -186,13 +165,30 @@ fun AnalysisTab(state: PersistedState) {
         }
 
         SgCard {
-            SgSectionHeader("申论各题型", "按得分估")
-            Spacer(Modifier.height(4.dp))
-            Text(
-                "申论估分 %.1f / 100".format(shenlunScore),
-                style = SgType.statValue,
-                color = c.accent
-            )
+            SgSectionHeader("申论估分", "按各题型得分率")
+            Spacer(Modifier.height(6.dp))
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    "%.1f".format(shenlunScore),
+                    style = SgType.heroNumber,
+                    color = c.accent
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("分 / 100", style = SgType.meta, color = c.inkMuted, modifier = Modifier.padding(bottom = 8.dp))
+            }
+            Spacer(Modifier.height(8.dp))
+            SgProgress(fraction = (shenlunScore / 100.0).toFloat())
+            if (shenlunStats.all { it.questions == 0 }) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "还没有申论的刷题记录，去「刷题」页选申论题型记一次就有了。",
+                    style = SgType.meta, color = c.inkMuted
+                )
+            }
+        }
+
+        SgCard {
+            SgSectionHeader("申论各题型得分率", "按得分估")
             Spacer(Modifier.height(6.dp))
             shenlunStats.forEach { st ->
                 val color = moduleColorOf(st.id)

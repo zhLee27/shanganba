@@ -69,6 +69,8 @@ private fun mmss(seconds: Int): String {
 fun PracticeTab(
     vm: AppViewModel,
     state: PersistedState,
+    subject: String,
+    onSubjectChange: (String) -> Unit,
     onStart: (ActiveTimer) -> Unit,
     onOpenHistory: () -> Unit
 ) {
@@ -84,7 +86,7 @@ fun PracticeTab(
     var pendingClearPresets by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(setOf<String>()) }
     var reorderMode by remember { mutableStateOf(false) }
-    var listSubject by remember { mutableStateOf("XINGCE") }
+    val listSubject = subject
 
     fun pickModule(m: SubjectModule) {
         moduleId = m.id
@@ -149,26 +151,11 @@ fun PracticeTab(
                 }
             }
             Spacer(Modifier.height(4.dp))
-            val tabIdx = if (listSubject == "XINGCE") 0 else 1
-            TabRow(
-                selectedTabIndex = tabIdx,
-                containerColor = Color.Transparent,
-                contentColor = c.accent
-            ) {
-                listOf("行测", "申论").forEachIndexed { i, label ->
-                    Tab(
-                        selected = tabIdx == i,
-                        onClick = { listSubject = if (i == 0) "XINGCE" else "SHENLUN" },
-                        text = {
-                            Text(
-                                label,
-                                style = SgType.cardTitle,
-                                color = if (tabIdx == i) c.accent else c.inkMuted
-                            )
-                        }
-                    )
-                }
-            }
+            SgTabRow(
+                tabs = listOf("行测", "申论"),
+                selectedIndex = if (listSubject == "XINGCE") 0 else 1,
+                onSelect = { onSubjectChange(if (it == 0) "XINGCE" else "SHENLUN") }
+            )
             Spacer(Modifier.height(6.dp))
             // 只列当前科目的大题型；小题型点前面的小三角展开
             val ordered = currentOrdered.filter { it.parentId.isEmpty() && it.subject == listSubject }
@@ -229,21 +216,41 @@ fun PracticeTab(
                             }
                         }
                 ) {
-                    // 展开小三角：点它才展开小题型
+                    // 展开小三角：更大更明显，点它才展开小题型
+                    val hasChildren = currentOrdered.any { it.parentId == m.id }
                     Box(
                         modifier = Modifier
-                            .size(26.dp)
-                            .clip(RoundedCornerShape(9.dp))
+                            .size(30.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (hasChildren) c.accent.copy(alpha = 0.14f) else c.surface2
+                            )
                             .clickable {
                                 expanded = if (expanded.contains(m.id)) expanded - m.id else expanded + m.id
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            if (expanded.contains(m.id)) "▾" else "▸",
-                            style = SgType.chip,
-                            color = if (currentOrdered.any { it.parentId == m.id }) c.accent else c.inkFaint
-                        )
+                        Canvas(modifier = Modifier.size(13.dp)) {
+                            val w = size.width
+                            val h = size.height
+                            val path = androidx.compose.ui.graphics.Path()
+                            if (expanded.contains(m.id)) {
+                                // 向下箭头
+                                path.moveTo(w * 0.05f, h * 0.28f)
+                                path.lineTo(w * 0.5f, h * 0.78f)
+                                path.lineTo(w * 0.95f, h * 0.28f)
+                            } else {
+                                // 向右箭头
+                                path.moveTo(w * 0.28f, h * 0.05f)
+                                path.lineTo(w * 0.78f, h * 0.5f)
+                                path.lineTo(w * 0.28f, h * 0.95f)
+                            }
+                            drawPath(
+                                path = path,
+                                color = if (hasChildren) c.accent else c.inkFaint,
+                                style = Stroke(width = 3f, cap = StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round)
+                            )
+                        }
                     }
                     Spacer(Modifier.width(2.dp))
                     Box(
@@ -293,7 +300,7 @@ fun PracticeTab(
                         )
                         Text("${child.defaultQuestionCount} 题", style = SgType.meta, color = c.inkMuted)
                         Spacer(Modifier.width(6.dp))
-                        PlayButton(color = moduleColorOf(child.id), onClick = { startWith(child) }, diameter = 32)
+                        PlayButton(color = moduleColorOf(child.id), onClick = { startWith(child) }, diameter = 28)
                     }
                 }
             }
@@ -568,7 +575,7 @@ private fun IconTextButton(text: String, danger: Boolean = false, onClick: () ->
 
 /** 计时按钮：实心圆 + 居中三角形（用 Canvas 画，保证三角形绝对居中） */
 @Composable
-private fun PlayButton(color: Color, onClick: () -> Unit, diameter: Int = 38) {
+private fun PlayButton(color: Color, onClick: () -> Unit, diameter: Int = 32) {
     Box(
         modifier = Modifier
             .size(diameter.dp)
@@ -577,11 +584,14 @@ private fun PlayButton(color: Color, onClick: () -> Unit, diameter: Int = 38) {
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
-        Canvas(modifier = Modifier.size((diameter / 2.6f).dp)) {
+        Canvas(modifier = Modifier.size((diameter / 2.9f).dp)) {
+            val w = size.width
+            val h = size.height
             val path = androidx.compose.ui.graphics.Path().apply {
-                moveTo(0f, 0f)
-                lineTo(size.width, size.height / 2f)
-                lineTo(0f, size.height)
+                // 视觉居中：左边界留出一点，三角形重心才不会偏
+                moveTo(w * 0.14f, h * 0.06f)
+                lineTo(w * 0.94f, h * 0.5f)
+                lineTo(w * 0.14f, h * 0.94f)
                 close()
             }
             drawPath(path, Color.White)
