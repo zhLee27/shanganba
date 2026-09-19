@@ -160,25 +160,22 @@ fun PracticeTab(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(if (picked) color.copy(alpha = 0.14f) else Color.Transparent)
+                        .background(if (picked) color.copy(alpha = 0.16f) else c.surface2)
                         .clickable { pickModule(m) }
-                        .padding(start = 2.dp, end = 2.dp, top = 6.dp, bottom = 6.dp)
+                        .padding(start = 6.dp, end = 6.dp, top = 9.dp, bottom = 9.dp)
                 ) {
-                    // 展开小三角：更大更明显，点它才展开小题型
+                    // 左侧展开箭头：只用线条箭头，不加圆底（方案 B）
                     val hasChildren = currentOrdered.any { it.parentId == m.id }
+                    val arrowStroke = with(LocalDensity.current) { 2.2.dp.toPx() }
                     Box(
                         modifier = Modifier
-                            .size(30.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (hasChildren) c.accent.copy(alpha = 0.14f) else c.surface2
-                            )
+                            .size(20.dp)
                             .clickable {
                                 expanded = if (expanded.contains(m.id)) expanded - m.id else expanded + m.id
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        Canvas(modifier = Modifier.size(13.dp)) {
+                        Canvas(modifier = Modifier.size(11.dp)) {
                             val w = size.width
                             val h = size.height
                             val path = androidx.compose.ui.graphics.Path()
@@ -195,12 +192,12 @@ fun PracticeTab(
                             }
                             drawPath(
                                 path = path,
-                                color = if (hasChildren) c.accent else c.inkFaint,
-                                style = Stroke(width = 3f, cap = StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round)
+                                color = if (hasChildren) c.accent else c.inkFaint.copy(alpha = 0.6f),
+                                style = Stroke(width = arrowStroke, cap = StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round)
                             )
                         }
                     }
-                    Spacer(Modifier.width(2.dp))
+                    Spacer(Modifier.width(4.dp))
                     Box(
                         modifier = Modifier
                             .size(if (picked) 11.dp else 8.dp)
