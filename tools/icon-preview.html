@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<style>
+  body{margin:0;background:#F7F8F5;font-family:"Microsoft YaHei UI","Microsoft YaHei",sans-serif;color:#2C332F;padding:34px 30px 40px}
+  h1{font-size:17px;font-weight:600;margin:0 0 6px}
+  p.sub{font-size:12.5px;color:#7C8A82;margin:0 0 26px}
+  .row{display:flex;gap:26px;align-items:flex-start}
+  .col{width:340px;background:#fff;border-radius:22px;padding:18px 18px 22px;box-shadow:0 10px 30px -18px rgba(12,30,22,.5)}
+  .name{font-size:14px;font-weight:600;margin-bottom:3px}
+  .desc{font-size:12px;color:#7C8A82;margin-bottom:14px;line-height:1.6}
+  .big{width:150px;height:150px;border-radius:34px;overflow:hidden;margin-bottom:16px;box-shadow:0 12px 26px -14px rgba(12,30,22,.55)}
+  .sizes{display:flex;gap:14px;align-items:flex-end}
+  .sizes div{border-radius:22%;overflow:hidden;box-shadow:0 6px 14px -8px rgba(12,30,22,.5)}
+  .s48{width:48px;height:48px}
+  .s72{width:72px;height:72px}
+  .s96{width:96px;height:96px}
+  svg{display:block;width:100%;height:100%}
+</style>
+</head>
+<body>
+<h1>上岸吧 · 图标方案</h1>
+<p class="sub">每套都给了 150 / 96 / 72 / 48 像素四种大小的实际效果，小图标下也看得清才算合格</p>
+
+<div class="row">
+  <div class="col">
+    <div class="name">方案 A · 台阶小旗</div>
+    <div class="desc">三级台阶一路向上，顶上一面小旗。“上岸”的字面意象，最好认。</div>
+    <div class="big">
+      <svg viewBox="0 0 108 108">
+        <defs>
+          <linearGradient id="ga" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#34D8A4"/><stop offset="100%" stop-color="#35B7E8"/>
+          </linearGradient>
+        </defs>
+        <rect width="108" height="108" fill="url(#ga)"/>
+        <rect x="22" y="68" width="17" height="17" rx="5" fill="#FFFFFF" opacity="0.9"/>
+        <rect x="43" y="54" width="17" height="31" rx="5" fill="#FFFFFF" opacity="0.95"/>
+        <rect x="64" y="40" width="17" height="45" rx="5" fill="#FFFFFF"/>
+        <rect x="70.5" y="17" width="3.4" height="21" rx="1.7" fill="#FFFFFF"/>
+        <path d="M73.9 18.6 L89 24.2 L73.9 29.8 Z" fill="#FFFFFF"/>
+      </svg>
+    </div>
+    <div class="sizes">
+      <div class="s96"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#ga)"/><rect x="22" y="68" width="17" height="17" rx="5" fill="#fff" opacity=".9"/><rect x="43" y="54" width="17" height="31" rx="5" fill="#fff" opacity=".95"/><rect x="64" y="40" width="17" height="45" rx="5" fill="#fff"/><rect x="70.5" y="17" width="3.4" height="21" rx="1.7" fill="#fff"/><path d="M73.9 18.6 L89 24.2 L73.9 29.8 Z" fill="#fff"/></svg></div>
+      <div class="s72"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#ga)"/><rect x="22" y="68" width="17" height="17" rx="5" fill="#fff" opacity=".9"/><rect x="43" y="54" width="17" height="31" rx="5" fill="#fff" opacity=".95"/><rect x="64" y="40" width="17" height="45" rx="5" fill="#fff"/><rect x="70.5" y="17" width="3.4" height="21" rx="1.7" fill="#fff"/><path d="M73.9 18.6 L89 24.2 L73.9 29.8 Z" fill="#fff"/></svg></div>
+      <div class="s48"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#ga)"/><rect x="22" y="68" width="17" height="17" rx="5" fill="#fff" opacity=".9"/><rect x="43" y="54" width="17" height="31" rx="5" fill="#fff" opacity=".95"/><rect x="64" y="40" width="17" height="45" rx="5" fill="#fff"/><rect x="70.5" y="17" width="3.4" height="21" rx="1.7" fill="#fff"/><path d="M73.9 18.6 L89 24.2 L73.9 29.8 Z" fill="#fff"/></svg></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="name">方案 B · 进度环箭头</div>
+    <div class="desc">一圈进度环包着一支向上的箭头，最像正经 App，也最贴“倒计时＋进度”的功能。</div>
+    <div class="big">
+      <svg viewBox="0 0 108 108">
+        <defs>
+          <linearGradient id="gb" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#2ED3A0"/><stop offset="100%" stop-color="#2E96D3"/>
+          </linearGradient>
+        </defs>
+        <rect width="108" height="108" fill="url(#gb)"/>
+        <circle cx="54" cy="54" r="31" fill="none" stroke="#FFFFFF" stroke-opacity="0.32" stroke-width="8"/>
+        <circle cx="54" cy="54" r="31" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"
+                stroke-dasharray="152 43" transform="rotate(-90 54 54)"/>
+        <path d="M54 68 L54 40 M54 40 L45 49 M54 40 L63 49" fill="none" stroke="#FFFFFF" stroke-width="7.5"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="sizes">
+      <div class="s96"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#gb)"/><circle cx="54" cy="54" r="31" fill="none" stroke="#fff" stroke-opacity=".32" stroke-width="8"/><circle cx="54" cy="54" r="31" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-dasharray="152 43" transform="rotate(-90 54 54)"/><path d="M54 68 L54 40 M54 40 L45 49 M54 40 L63 49" fill="none" stroke="#fff" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="s72"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#gb)"/><circle cx="54" cy="54" r="31" fill="none" stroke="#fff" stroke-opacity=".32" stroke-width="8"/><circle cx="54" cy="54" r="31" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-dasharray="152 43" transform="rotate(-90 54 54)"/><path d="M54 68 L54 40 M54 40 L45 49 M54 40 L63 49" fill="none" stroke="#fff" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="s48"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#gb)"/><circle cx="54" cy="54" r="31" fill="none" stroke="#fff" stroke-opacity=".32" stroke-width="8"/><circle cx="54" cy="54" r="31" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-dasharray="152 43" transform="rotate(-90 54 54)"/><path d="M54 68 L54 40 M54 40 L45 49 M54 40 L63 49" fill="none" stroke="#fff" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="name">方案 C · 破浪向上</div>
+    <div class="desc">箭头从水面冲出来，两道波浪。意象最“上岸”，也最有活力。</div>
+    <div class="big">
+      <svg viewBox="0 0 108 108">
+        <defs>
+          <linearGradient id="gc" x1="0" y1="0" x2="0.6" y2="1">
+            <stop offset="0%" stop-color="#3EC9E0"/><stop offset="100%" stop-color="#2ABE86"/>
+          </linearGradient>
+        </defs>
+        <rect width="108" height="108" fill="url(#gc)"/>
+        <path d="M54 66 L54 30 M54 30 L42 43 M54 30 L66 43" fill="none" stroke="#FFFFFF" stroke-width="8.5"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M20 74 q11 -9 22 0 q11 9 22 0 q11 -9 22 0" fill="none" stroke="#FFFFFF" stroke-opacity="0.9"
+              stroke-width="6.5" stroke-linecap="round"/>
+        <path d="M27 87 q9 -7 18 0 q9 7 18 0 q9 -7 18 0" fill="none" stroke="#FFFFFF" stroke-opacity="0.55"
+              stroke-width="5.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="sizes">
+      <div class="s96"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#gc)"/><path d="M54 66 L54 30 M54 30 L42 43 M54 30 L66 43" fill="none" stroke="#fff" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 74 q11 -9 22 0 q11 9 22 0 q11 -9 22 0" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="6.5" stroke-linecap="round"/><path d="M27 87 q9 -7 18 0 q9 7 18 0 q9 -7 18 0" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="5.5" stroke-linecap="round"/></svg></div>
+      <div class="s72"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#gc)"/><path d="M54 66 L54 30 M54 30 L42 43 M54 30 L66 43" fill="none" stroke="#fff" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 74 q11 -9 22 0 q11 9 22 0 q11 -9 22 0" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="6.5" stroke-linecap="round"/><path d="M27 87 q9 -7 18 0 q9 7 18 0 q9 -7 18 0" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="5.5" stroke-linecap="round"/></svg></div>
+      <div class="s48"><svg viewBox="0 0 108 108"><rect width="108" height="108" fill="url(#gc)"/><path d="M54 66 L54 30 M54 30 L42 43 M54 30 L66 43" fill="none" stroke="#fff" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 74 q11 -9 22 0 q11 9 22 0 q11 -9 22 0" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="6.5" stroke-linecap="round"/><path d="M27 87 q9 -7 18 0 q9 7 18 0 q9 -7 18 0" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="5.5" stroke-linecap="round"/></svg></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,468 @@
+package com.shanganba.examcountdown.ui
+
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import com.shanganba.examcountdown.data.PersistedState
+import com.shanganba.examcountdown.update.UpdateManager
+import com.shanganba.examcountdown.util.CrashLogger
+import androidx.compose.foundation.layout.heightIn
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+
+@Composable
+fun SettingsScreen(
+    vm: AppViewModel,
+    state: PersistedState,
+    onOpenTasks: () -> Unit,
+    onOpenKnowledge: () -> Unit
+) {
+    val c = LocalSgColors.current
+    val ctx = LocalContext.current
+    val scroll = rememberScrollState()
+    val s = state.settings
+    val scope = rememberCoroutineScope()
+    var updateStatus by remember { mutableStateOf("") }
+
+    var editStart by remember { mutableStateOf(false) }
+    var editTarget by remember { mutableStateOf(false) }
+    var editDailyTime by remember { mutableStateOf(false) }
+    var editNodeTime by remember { mutableStateOf(false) }
+    var editUrl by remember { mutableStateOf(false) }
+    var showCrash by remember { mutableStateOf(false) }
+    var crashText by remember { mutableStateOf(CrashLogger.read(ctx)) }
+
+    val crashExportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("text/plain")
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        try {
+            ctx.contentResolver.openOutputStream(uri)?.use { os ->
+                os.write((crashText ?: "没有崩溃日志").toByteArray(Charsets.UTF_8))
+            }
+            toast(ctx, "崩溃日志已导出")
+        } catch (e: Exception) {
+            toast(ctx, "导出失败：${e.message}")
+        }
+    }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        try {
+            ctx.contentResolver.openOutputStream(uri)?.use { os ->
+                os.write(vm.exportText().toByteArray(Charsets.UTF_8))
+            }
+            toast(ctx, "已导出数据")
+        } catch (e: Exception) {
+            toast(ctx, "导出失败：${e.message}")
+        }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        try {
+            val text = ctx.contentResolver.openInputStream(uri)?.use { ins ->
+                ins.readBytes().toString(Charsets.UTF_8)
+            } ?: ""
+            vm.importText(text) { result ->
+                toast(ctx, if (result.isSuccess) "导入成功" else "导入失败：文件格式不对")
+            }
+        } catch (e: Exception) {
+            toast(ctx, "导入失败：${e.message}")
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(scroll)
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Spacer(Modifier.height(2.dp))
+
+        SgCard {
+            SgSectionHeader("外观")
+            Text("主题配色", style = SgType.meta, color = c.inkMuted)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("fresh" to "清新渐变", "pop" to "活力撞色", "sticker" to "贴纸手帐").forEach { (key, label) ->
+                    SgChip(
+                        label,
+                        if (s.theme == key) c.accent else c.inkMuted,
+                        modifier = Modifier.clickable { vm.updateSettings { it.copy(theme = key) } }
+                    )
+                }
+            }
+            Spacer(Modifier.height(4.dp))
+            Text("深浅模式", style = SgType.meta, color = c.inkMuted)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("system" to "跟随系统", "light" to "浅色", "dark" to "深色").forEach { (key, label) ->
+                    SgChip(
+                        label,
+                        if (s.darkMode == key) c.accent else c.inkMuted,
+                        modifier = Modifier.clickable { vm.updateSettings { it.copy(darkMode = key) } }
+                    )
+                }
+            }
+            Spacer(Modifier.height(4.dp))
+            Text("鼓励语气", style = SgType.meta, color = c.inkMuted)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("hard" to "硬核", "soft" to "温柔", "fun" to "轻松").forEach { (key, label) ->
+                    SgChip(
+                        label,
+                        if (s.tone == key) c.accent else c.inkMuted,
+                        modifier = Modifier.clickable { vm.updateSettings { it.copy(tone = key) } }
+                    )
+                }
+            }
+        }
+
+        SgCard {
+            SgSectionHeader("备考设置")
+            SettingRow("备考起跑日", s.startDate.ifBlank { "首次启动日" }) { editStart = true }
+            SgDivider()
+            SettingRow("目标分（笔试总分）", "${trimDouble(s.targetScore)} 分") { editTarget = true }
+            SgDivider()
+            SettingRow("每日任务模板", "${state.templates.count { it.enabled }} 条启用") { onOpenTasks() }
+            SgDivider()
+            SettingRow("知识框架", "${state.knowledge.size} 个节点") { onOpenKnowledge() }
+            SgDivider()
+            SettingRow("考试节点", "${state.nodes.size} 个") { }
+        }
+
+        SgCard {
+            SgSectionHeader("提醒")
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("每日计划提醒", style = SgType.body, color = c.ink)
+                    Text(
+                        "当天任务没全部完成才提醒 · ${formatMinute(s.dailyReminderMinute)}",
+                        style = SgType.meta, color = c.inkMuted
+                    )
+                }
+                SgSoftButton("改时间") { editDailyTime = true }
+                Spacer(Modifier.width(8.dp))
+                Switch(
+                    checked = s.dailyReminderOn,
+                    onCheckedChange = { on -> vm.updateSettings { it.copy(dailyReminderOn = on) } }
+                )
+            }
+            SgDivider()
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("考前节点提醒", style = SgType.body, color = c.ink)
+                    Text(
+                        "笔试前 7 / 3 / 1 天各提醒一次 · ${formatMinute(s.nodeReminderMinute)}",
+                        style = SgType.meta, color = c.inkMuted
+                    )
+                }
+                SgSoftButton("改时间") { editNodeTime = true }
+                Spacer(Modifier.width(8.dp))
+                Switch(
+                    checked = s.nodeReminderOn,
+                    onCheckedChange = { on -> vm.updateSettings { it.copy(nodeReminderOn = on) } }
+                )
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "已经接入系统闹钟：每日提醒只在你当天任务没全部完成时响；" +
+                    "考前 7 / 3 / 1 天各提醒一次。手机重启后会自动重排。",
+                style = SgType.meta,
+                color = c.inkFaint
+            )
+        }
+
+        SgCard {
+            SgSectionHeader("数据")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                SgSoftButton("导出 JSON") {
+                    exportLauncher.launch("shanganba-backup-${LocalDate.now()}.json")
+                }
+                Spacer(Modifier.width(10.dp))
+                SgSoftButton("导入 JSON") { importLauncher.launch(arrayOf("application/json", "*/*")) }
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "导出文件里包含节点、任务、打卡和设置；导入会覆盖当前数据。",
+                style = SgType.meta,
+                color = c.inkMuted
+            )
+        }
+
+        SgCard {
+            SgSectionHeader("应用内更新")
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("启动时自动检查", style = SgType.body, color = c.ink)
+                    Text(
+                        if (s.updateUrl.isBlank()) "更新地址还没填" else s.updateUrl,
+                        style = SgType.meta, color = c.inkMuted,
+                        maxLines = 2
+                    )
+                }
+                Switch(
+                    checked = s.autoCheckUpdate,
+                    onCheckedChange = { on -> vm.updateSettings { it.copy(autoCheckUpdate = on) } }
+                )
+            }
+            SgDivider()
+            SettingRow("更新地址（version.json 直链）", if (s.updateUrl.isBlank()) "未设置" else "已设置") { editUrl = true }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                if (s.updateUrl.isBlank()) {
+                    "当前用内置地址（始终指向最新 Release）：${s.effectiveUpdateUrl()}"
+                } else {
+                    "当前用你自定义的地址：${s.updateUrl}"
+                },
+                style = SgType.meta,
+                color = c.inkFaint
+            )
+            Spacer(Modifier.height(10.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                SgSoftButton("检查更新") {
+                    val checkUrl = s.effectiveUpdateUrl()
+                    if (checkUrl.isBlank()) {
+                        updateStatus = "没有可用的更新地址"
+                    } else {
+                        updateStatus = "正在检查…"
+                        scope.launch {
+                            UpdateManager.fetch(checkUrl)
+                                .onSuccess { manifest ->
+                                    val current = UpdateManager.currentVersionCode(ctx)
+                                    if (manifest.versionCode > current) {
+                                        updateStatus = "发现 ${manifest.versionName}，开始下载…"
+                                        UpdateManager.download(ctx, manifest) { p ->
+                                            updateStatus = "下载中 $p%"
+                                        }.onSuccess { file ->
+                                            val ok = file != null
+                                            if (ok) {
+                                                updateStatus = "下载完成，拉起安装器"
+                                                UpdateManager.install(ctx, file!!)
+                                            }
+                                        }.onFailure {
+                                            updateStatus = "下载失败：${it.message}"
+                                        }
+                                    } else {
+                                        updateStatus = "已经是最新版 ${UpdateManager.currentVersionName(ctx)}"
+                                    }
+                                }
+                                .onFailure {
+                                    updateStatus = "检查失败：${it.message}"
+                                }
+                        }
+                    }
+                }
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    updateStatus.ifBlank { "当前 ${UpdateManager.currentVersionName(ctx)}" },
+                    style = SgType.meta,
+                    color = c.inkMuted
+                )
+            }
+        }
+
+        SgCard {
+            SgSectionHeader("关于")
+            SettingRow("应用", "上岸吧 1.2.0") { }
+            SgDivider()
+            SettingRow(
+                "崩溃日志",
+                if (crashText == null) "暂无崩溃记录" else "有 1 条，点开查看"
+            ) {
+                crashText = CrashLogger.read(ctx)
+                showCrash = true
+            }
+            SgDivider()
+            SettingRow("目标考试", "2027 年安徽省考 · 行测 + 申论") { }
+            SgDivider()
+            SettingRow("数据存储", "仅本机，可导出备份") { }
+        }
+    }
+
+    if (editStart) {
+        TextInputDialog(
+            title = "备考起跑日",
+            label = "yyyy-MM-dd",
+            initial = s.startDate.ifBlank { LocalDate.now().toString() },
+            onDismiss = { editStart = false },
+            onSave = { value ->
+                vm.updateSettings { it.copy(startDate = value) }
+                editStart = false
+            }
+        )
+    }
+    if (editTarget) {
+        TextInputDialog(
+            title = "目标分（笔试总分 200）",
+            label = "如 135",
+            initial = trimDouble(s.targetScore),
+            onDismiss = { editTarget = false },
+            onSave = { value ->
+                value.toDoubleOrNull()?.let { v -> vm.updateSettings { it.copy(targetScore = v) } }
+                editTarget = false
+            }
+        )
+    }
+    if (editDailyTime) {
+        TextInputDialog(
+            title = "每日提醒时间",
+            label = "HH:mm",
+            initial = formatMinute(s.dailyReminderMinute),
+            onDismiss = { editDailyTime = false },
+            onSave = { value ->
+                parseMinute(value)?.let { m -> vm.updateSettings { it.copy(dailyReminderMinute = m) } }
+                editDailyTime = false
+            }
+        )
+    }
+    if (editNodeTime) {
+        TextInputDialog(
+            title = "考前提醒时间",
+            label = "HH:mm",
+            initial = formatMinute(s.nodeReminderMinute),
+            onDismiss = { editNodeTime = false },
+            onSave = { value ->
+                parseMinute(value)?.let { m -> vm.updateSettings { it.copy(nodeReminderMinute = m) } }
+                editNodeTime = false
+            }
+        )
+    }
+    if (editUrl) {
+        TextInputDialog(
+            title = "更新地址",
+            label = "https://…/version.json",
+            initial = s.updateUrl,
+            onDismiss = { editUrl = false },
+            onSave = { value ->
+                vm.updateSettings { it.copy(updateUrl = value.trim()) }
+                editUrl = false
+            }
+        )
+    }
+
+    if (showCrash) {
+        AlertDialog(
+            onDismissRequest = { showCrash = false },
+            title = { Text("崩溃日志", style = SgType.cardTitle) },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 420.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(
+                        crashText ?: "还没有崩溃记录。如果 App 闪退过，重新打开后这里会显示堆栈信息。",
+                        style = SgType.bodyLong,
+                        color = c.ink
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { crashExportLauncher.launch("shanganba-crash.txt") }) {
+                    Text("导出文件")
+                }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = {
+                        CrashLogger.clear(ctx)
+                        crashText = null
+                        showCrash = false
+                    }) { Text("清空") }
+                    TextButton(onClick = { showCrash = false }) { Text("关闭") }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun SettingRow(label: String, value: String, onClick: () -> Unit) {
+    val c = LocalSgColors.current
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 10.dp)
+    ) {
+        Text(label, style = SgType.body, color = c.ink, modifier = Modifier.weight(1f))
+        Text(value, style = SgType.meta, color = c.inkMuted, maxLines = 1)
+        Spacer(Modifier.width(6.dp))
+        Text("›", style = SgType.cardTitle, color = c.inkFaint)
+    }
+}
+
+@Composable
+private fun TextInputDialog(
+    title: String,
+    label: String,
+    initial: String,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit
+) {
+    var value by remember { mutableStateOf(initial) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title, style = SgType.cardTitle) },
+        text = {
+            OutlinedTextField(
+                value = value,
+                onValueChange = { value = it },
+                singleLine = true,
+                label = { Text(label) }
+            )
+        },
+        confirmButton = { TextButton(onClick = { onSave(value.trim()) }) { Text("保存") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } }
+    )
+}
+
+private fun formatMinute(minute: Int): String = "%02d:%02d".format(minute / 60, minute % 60)
+
+private fun parseMinute(text: String): Int? {
+    val parts = text.split(":")
+    if (parts.size != 2) return null
+    val h = parts[0].trim().toIntOrNull() ?: return null
+    val m = parts[1].trim().toIntOrNull() ?: return null
+    if (h !in 0..23 || m !in 0..59) return null
+    return h * 60 + m
+}
+
+private fun trimDouble(v: Double): String =
+    if (v == v.toLong().toDouble()) v.toLong().toString() else v.toString()
+
+private fun toast(ctx: android.content.Context, msg: String) {
+    Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
+}

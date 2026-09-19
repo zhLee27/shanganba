@@ -1,0 +1,25 @@
+# 签名密钥：绝对不能提交，泄露等于别人能签出能覆盖安装的假更新包
+tools/keystore/
+*.jks
+*.keystore
+keystore.properties
+
+# 本机环境
+local.properties
+.gradle/
+build/
+app/build/
+.idea/
+*.iml
+
+# 产物与个人数据（导出备份里有打卡和错题记录）
+dist/
+*.apk
+shanganba-backup-*.json
+upload-token.txt
+
+# 工具链下载缓存
+AndroidDev/
+.robo-home/
+.robo-deps/
+.kotlin/

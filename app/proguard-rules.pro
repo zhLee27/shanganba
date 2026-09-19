@@ -1,0 +1,2 @@
+-keepclassmembers class com.shanganba.examcountdown.data.** { *; }
+-keepattributes *Annotation*, InnerClasses
