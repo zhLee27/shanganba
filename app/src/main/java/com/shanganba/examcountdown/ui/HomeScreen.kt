@@ -67,7 +67,18 @@ fun HomeScreen(
         SgCard {
             SgSectionHeader("今日任务", "$doneTasks / $totalTasks · 完成 $donePct%")
             Spacer(Modifier.height(2.dp))
+            var lastSubject = ""
             state.templates.filter { it.enabled }.sortedBy { it.order }.forEachIndexed { index, t ->
+                val subject = state.modules.firstOrNull { it.id == t.moduleId }?.subject ?: "XINGCE"
+                if (subject != lastSubject) {
+                    lastSubject = subject
+                    Text(
+                        if (subject == "SHENLUN") "申论" else "行测",
+                        style = SgType.chip,
+                        color = c.accent,
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
+                }
                 TaskRow(
                     title = t.title,
                     note = if (t.targetAmount > 0) "${t.targetAmount} ${t.unit}" else "",

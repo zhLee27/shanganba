@@ -101,7 +101,17 @@ fun PracticeTab(
             SgSectionHeader("本次刷什么", "长按拖动排序")
             Spacer(Modifier.height(4.dp))
             val ordered = currentOrdered
+            var lastSubject = ""
             ordered.forEachIndexed { index, m ->
+                if (m.subject != lastSubject) {
+                    lastSubject = m.subject
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        if (m.subject == "SHENLUN") "申论" else "行测",
+                        style = SgType.chip,
+                        color = c.accent
+                    )
+                }
                 val color = moduleColorOf(m.id, index)
                 val picked = m.id == moduleId
                 Row(
@@ -346,7 +356,12 @@ fun PracticeTab(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    text.toIntOrNull()?.let { minutes = it.coerceIn(1, 180) }
+                    text.toIntOrNull()?.let { v ->
+                        val m = v.coerceIn(1, 180)
+                        minutes = m
+                        // 自定义时间直接变成预设，省掉再点一次“存为预设”
+                        vm.updateTimerPresets(state.settings.timerPresets + m)
+                    }
                     showCustomMinutes = false
                 }) { Text("确定") }
             },

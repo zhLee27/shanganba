@@ -189,16 +189,19 @@ fun defaultNodes(): List<ExamNode> = listOf(
 )
 
 fun defaultModules(): List<SubjectModule> = listOf(
-    SubjectModule("m_yanyu", "XINGCE", "言语理解与表达", 1, 30, 1800),
-    SubjectModule("m_shuliang", "XINGCE", "数量关系", 2, 15, 1200),
-    SubjectModule("m_panduan", "XINGCE", "判断推理", 3, 35, 2400),
-    SubjectModule("m_ziliao", "XINGCE", "资料分析", 4, 20, 1500),
-    SubjectModule("m_changshi", "XINGCE", "常识判断", 5, 20, 900),
-    SubjectModule("m_guina", "SHENLUN", "申论 · 归纳概括", 6, 1, 1500),
-    SubjectModule("m_zonghe", "SHENLUN", "申论 · 综合分析", 7, 1, 1500),
-    SubjectModule("m_duice", "SHENLUN", "申论 · 提出对策", 8, 1, 1500),
-    SubjectModule("m_guanche", "SHENLUN", "申论 · 贯彻执行", 9, 1, 1500),
-    SubjectModule("m_zuowen", "SHENLUN", "申论 · 文章写作", 10, 1, 3000)
+    SubjectModule("m_zhengzhi", "XINGCE", "政治理论", 1, 15, 900),
+    SubjectModule("m_changshi", "XINGCE", "常识判断", 2, 15, 900),
+    SubjectModule("m_yanyu", "XINGCE", "言语理解", 3, 25, 1500),
+    SubjectModule("m_shuliang", "XINGCE", "数量关系", 4, 15, 1200),
+    SubjectModule("m_tuxing", "XINGCE", "图形推理", 5, 5, 300),
+    SubjectModule("m_dingyi", "XINGCE", "定义判断", 6, 10, 720),
+    SubjectModule("m_leibi", "XINGCE", "类比推理", 7, 10, 600),
+    SubjectModule("m_luoji", "XINGCE", "逻辑判断", 8, 10, 900),
+    SubjectModule("m_ziliao", "XINGCE", "资料分析", 9, 20, 1500),
+    SubjectModule("m_guina", "SHENLUN", "申论 · 归纳概括", 10, 1, 900),
+    SubjectModule("m_zonghe", "SHENLUN", "申论 · 综合分析/提出对策", 11, 1, 1200),
+    SubjectModule("m_guanche", "SHENLUN", "申论 · 贯彻执行", 12, 1, 1500),
+    SubjectModule("m_zuowen", "SHENLUN", "申论 · 议论文大作文", 13, 1, 3000)
 )
 
 fun defaultTemplates(): List<TaskTemplate> = listOf(
@@ -231,21 +234,25 @@ fun defaultScoreConfigs(): List<ScoreConfig> = listOf(
     ScoreConfig(
         "XINGCE",
         listOf(
-            ScoreItem("m_changshi", 20, 0.5),
-            ScoreItem("m_yanyu", 30, 0.8),
-            ScoreItem("m_shuliang", 15, 0.8),
-            ScoreItem("m_panduan", 35, 0.8),
-            ScoreItem("m_ziliao", 20, 1.3)
+            ScoreItem("m_zhengzhi", 15, 0.7),
+            ScoreItem("m_changshi", 15, 0.6),
+            ScoreItem("m_yanyu", 25, 0.8),
+            ScoreItem("m_shuliang", 15, 0.9),
+            ScoreItem("m_tuxing", 5, 0.7),
+            ScoreItem("m_dingyi", 10, 0.8),
+            ScoreItem("m_leibi", 10, 0.7),
+            ScoreItem("m_luoji", 10, 0.9),
+            ScoreItem("m_ziliao", 20, 0.9)
         ),
         100.0
     ),
     ScoreConfig(
         "SHENLUN",
         listOf(
-            ScoreItem("m_guina", 1, 20.0),
+            ScoreItem("m_guina", 1, 15.0),
             ScoreItem("m_zonghe", 1, 20.0),
             ScoreItem("m_guanche", 1, 25.0),
-            ScoreItem("m_zuowen", 1, 35.0)
+            ScoreItem("m_zuowen", 1, 40.0)
         ),
         100.0
     )

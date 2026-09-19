@@ -33,7 +33,7 @@ class AppStore(private val context: Context) {
         }
         if (raw.isNullOrBlank()) return freshState()
         return try {
-            json.decodeFromString(PersistedState.serializer(), raw)
+            migrate(json.decodeFromString(PersistedState.serializer(), raw))
         } catch (e: Exception) {
             backupBroken(raw)
             freshState()
@@ -43,6 +43,21 @@ class AppStore(private val context: Context) {
     private fun freshState() = PersistedState(
         settings = Settings(firstLaunchAt = System.currentTimeMillis())
     )
+
+    /** 1.5.0 起行测改成新题型结构（政治理论独立、判断推理拆四块），保留刷题与错题记录 */
+    private fun migrate(state: PersistedState): PersistedState {
+        if (state.schemaVersion >= 2) return state
+        val remap = mapOf("m_panduan" to "m_tuxing", "m_duice" to "m_zonghe")
+        fun fix(id: String) = remap[id] ?: id
+        return state.copy(
+            schemaVersion = 2,
+            modules = defaultModules(),
+            scoreConfigs = defaultScoreConfigs(),
+            sessions = state.sessions.map { it.copy(moduleId = fix(it.moduleId)) },
+            questions = state.questions.map { it.copy(moduleId = fix(it.moduleId)) },
+            templates = state.templates.map { it.copy(moduleId = fix(it.moduleId)) }
+        )
+    }
 
     private fun backupBroken(raw: String) {
         try {

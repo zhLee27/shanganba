@@ -3,6 +3,7 @@ package com.shanganba.examcountdown.ui
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -155,7 +156,7 @@ fun ProfileEditScreen(vm: AppViewModel, state: PersistedState, onBack: () -> Uni
         val file = pendingPhoto
         if (ok && file != null) cropTarget = file.absolutePath
     }
-    val fileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+    val fileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
         if (uri != null) {
             try {
                 val dest = avatarFile(ctx)
@@ -213,7 +214,9 @@ fun ProfileEditScreen(vm: AppViewModel, state: PersistedState, onBack: () -> Uni
                         cameraLauncher.launch(uri)
                     }
                     SgSoftButton("从相册选") {
-                        fileLauncher.launch(arrayOf("image/*"))
+                        fileLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
                     }
                 }
             }

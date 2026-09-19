@@ -251,7 +251,18 @@ fun TasksScreen(vm: AppViewModel, state: PersistedState, onBack: () -> Unit) {
                     color = c.inkMuted
                 )
             }
+            var lastSubject = ""
             state.templates.sortedBy { it.order }.forEachIndexed { index, t ->
+                val subject = state.modules.firstOrNull { it.id == t.moduleId }?.subject ?: "XINGCE"
+                if (subject != lastSubject) {
+                    lastSubject = subject
+                    Text(
+                        if (subject == "SHENLUN") "申论" else "行测",
+                        style = SgType.chip,
+                        color = c.accent,
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
+                }
                 SgCard {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         SgDot(moduleColorOf(t.moduleId, index))

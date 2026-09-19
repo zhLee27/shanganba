@@ -15,11 +15,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,6 +64,18 @@ fun SettingsScreen(
     var editUrl by remember { mutableStateOf(false) }
     var showCrash by remember { mutableStateOf(false) }
     var crashText by remember { mutableStateOf(CrashLogger.read(ctx)) }
+    var versionStatus by remember { mutableStateOf("检查中…") }
+
+    LaunchedEffect(s.updateUrl, s.autoCheckUpdate) {
+        val url = s.effectiveUpdateUrl()
+        versionStatus = "检查中…"
+        UpdateManager.fetch(url)
+            .onSuccess { m ->
+                val cur = UpdateManager.currentVersionCode(ctx)
+                versionStatus = if (m.versionCode > cur) "有新版本 ${m.versionName}" else "已是最新版"
+            }
+            .onFailure { versionStatus = "检查失败（网络不通）" }
+    }
 
     val crashExportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("text/plain")
@@ -304,7 +320,9 @@ fun SettingsScreen(
 
         SgCard {
             SgSectionHeader("关于")
-            SettingRow("应用", "上岸吧 1.2.0") { }
+            SettingRow("应用", "上岸吧 ${UpdateManager.currentVersionName(ctx)}") { }
+            SgDivider()
+            SettingRow("版本状态", versionStatus) { }
             SgDivider()
             SettingRow(
                 "崩溃日志",
@@ -345,29 +363,29 @@ fun SettingsScreen(
         )
     }
     if (editDailyTime) {
-        TextInputDialog(
+        TimePickDialog(
             title = "每日提醒时间",
-            label = "HH:mm",
             initial = formatMinute(s.dailyReminderMinute),
             onDismiss = { editDailyTime = false },
             onSave = { value ->
-                parseMinute(value)?.let { m -> vm.updateSettings { it.copy(dailyReminderMinute = m) } }
+                vm.updateSettings { it.copy(dailyReminderMinute = value) }
                 editDailyTime = false
             }
         )
     }
     if (editNodeTime) {
-        TextInputDialog(
+        TimePickDialog(
             title = "考前提醒时间",
-            label = "HH:mm",
             initial = formatMinute(s.nodeReminderMinute),
             onDismiss = { editNodeTime = false },
             onSave = { value ->
-                parseMinute(value)?.let { m -> vm.updateSettings { it.copy(nodeReminderMinute = m) } }
+                vm.updateSettings { it.copy(nodeReminderMinute = value) }
                 editNodeTime = false
             }
         )
     }
+
+    // 时间选择器放在文件末尾单独定义（见下方 TimePickDialog）
     if (editUrl) {
         TextInputDialog(
             title = "更新地址",
@@ -474,4 +492,30 @@ private fun trimDouble(v: Double): String =
 
 private fun toast(ctx: android.content.Context, msg: String) {
     Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
+}
+
+/** 提醒时间：用系统滚轮时间选择器，直接选具体几点几分 */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TimePickDialog(
+    title: String,
+    initial: String,
+    onDismiss: () -> Unit,
+    onSave: (Int) -> Unit
+) {
+    val parts = initial.split(":")
+    val state = rememberTimePickerState(
+        initialHour = (parts.getOrNull(0)?.toIntOrNull() ?: 20).coerceIn(0, 23),
+        initialMinute = (parts.getOrNull(1)?.toIntOrNull() ?: 0).coerceIn(0, 59),
+        is24Hour = true
+    )
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title, style = SgType.cardTitle) },
+        text = { TimePicker(state = state) },
+        confirmButton = {
+            TextButton(onClick = { onSave(state.hour * 60 + state.minute) }) { Text("保存") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } }
+    )
 }

@@ -58,8 +58,13 @@ val ModuleColors = listOf(
 fun moduleColor(index: Int): Color = ModuleColors[Math.floorMod(index, ModuleColors.size)]
 
 private val moduleIdToColor = mapOf(
+    "m_zhengzhi" to ModuleColors[1],
     "m_yanyu" to ModuleColors[0],
     "m_shuliang" to ModuleColors[1],
+    "m_tuxing" to ModuleColors[2],
+    "m_dingyi" to ModuleColors[2],
+    "m_leibi" to ModuleColors[2],
+    "m_luoji" to ModuleColors[2],
     "m_panduan" to ModuleColors[2],
     "m_ziliao" to ModuleColors[3],
     "m_changshi" to ModuleColors[4],
